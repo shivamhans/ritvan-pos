@@ -1007,6 +1007,24 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
             <div className="live-report-mini"><small>Negative stock</small><b>{reportData.summary.negativeStockCount}</b></div>
             <div className="live-report-mini"><small>Open reconciliations</small><b>{reportData.summary.openReconciliations}</b></div>
           </div>
+          <section className="panel live-section product-analysis-section">
+            <div className="panel-head"><div><h2>Product sales analysis</h2><p>Item-level performance for sales completed in this period. Discounts are allocated proportionally across sale lines; refunds use the original returned line records.</p></div><TrendingUp size={18} color="var(--violet)"/></div>
+            <div className="product-analysis-summary">
+              <div><small>Units sold</small><b>{Number(reportData.productSalesSummary?.unitsSold || 0).toLocaleString('en-IN')}</b></div>
+              <div><small>Units returned</small><b>{Number(reportData.productSalesSummary?.unitsReturned || 0).toLocaleString('en-IN')}</b></div>
+              <div><small>Gross item sales</small><b>{reportMoney(reportData.productSalesSummary?.grossSales)}</b></div>
+              <div><small>Allocated discounts</small><b>{reportMoney(reportData.productSalesSummary?.discountAmount)}</b></div>
+              <div><small>Product refunds</small><b>{reportMoney(reportData.productSalesSummary?.refundAmount)}</b></div>
+              <div><small>Net item sales</small><b>{reportMoney(reportData.productSalesSummary?.netSales)}</b></div>
+            </div>
+            <div className="panel-head product-analysis-toolbar">
+              <div className="search-box compact"><Search size={15}/><input placeholder="Search item name or SKU…" value={productQuery} onChange={event=>setProductQuery(event.target.value)}/><button className="icon-button small" onClick={()=>setProductQuery('')} title="Clear search"><X size={14}/></button></div>
+              <div className="toolbar-controls"><Field label="Sort by"><select className="select-control" value={productSort} onChange={event=>setProductSort(event.target.value)}><option value="netSales">Net sales</option><option value="unitsSold">Units sold</option><option value="grossSales">Gross sales</option><option value="refundAmount">Refunds</option><option value="name">Name</option></select></Field></div>
+            </div>
+            {productAnalysisRows.length ? <div className="table-wrap product-analysis-table-wrap"><table className="product-analysis-table"><thead><tr><th>PRODUCT</th><th>UNITS SOLD</th><th>RETURNED</th><th>GROSS SALES</th><th>DISCOUNT</th><th>REFUNDS</th><th>NET ITEM SALES</th></tr></thead><tbody>{productAnalysisRows.map(row=><tr key={row.itemId}><td><b>{row.name}</b><small className="live-cell-sub">{row.sku || 'No SKU'}</small></td><td>{Number(row.unitsSold || 0).toLocaleString('en-IN')}</td><td>{Number(row.unitsReturned || 0).toLocaleString('en-IN')}</td><td>{reportMoney(row.grossSales)}</td><td>{reportMoney(row.discountAmount)}</td><td>{reportMoney(row.refundAmount)}</td><td><b className="product-net-sales">{reportMoney(row.netSales)}</b></td></tr>)}</tbody></table></div>
+            : <BlankState title={productQuery ? 'No matching products' : 'No item sales in this period'} text={productQuery ? 'Try another item name or SKU.' : 'Completed sales containing items will appear here.'}/>}
+            <div className="table-footer"><span>{productAnalysisRows.length} of {(reportData.productSales || []).length} product line summaries</span><span className="muted">Sale-level discounts are allocated by line value</span></div>
+          </section>
           <div className="info-callout"><CircleHelp size={16}/><span>{reportData.notes.join(' ')} Sales and refunds are counted on their completion dates. This report does not calculate net profit.</span></div>
           {reportData.recentTransactions.length > 0 && <section className="panel live-section"><div className="panel-head"><div><h2>Recent sales</h2><p>Latest saved transactions in the database.</p></div><LiveButton onClick={()=>onNavigate('Transactions')}>View history</LiveButton></div><div className="table-wrap"><table><thead><tr><th>RECEIPT</th><th>CUSTOMER</th><th>CASHIER</th><th>DATE</th><th>PAYMENT</th><th>TOTAL</th></tr></thead><tbody>{reportData.recentTransactions.map(row=><tr key={row.id}><td><b>{row.receiptNo}</b></td><td>{row.customer}</td><td>{row.cashier}</td><td>{asDate(row.completedAt)}</td><td>{prettyStatus(row.paymentMethod)}</td><td>{reportMoney(row.totalAmount)}</td></tr>)}</tbody></table></div></section>}
         </>}
