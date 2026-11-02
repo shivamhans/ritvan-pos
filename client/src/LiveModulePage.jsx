@@ -361,6 +361,56 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     }
   };
 
+  const submitSpending = async event => {
+    event.preventDefault();
+    if (busy) return;
+    const amount = Number(form.amount);
+    if (!Number.isFinite(amount) || amount <= 0) { notify('Enter an amount greater than zero.', 'warning'); return; }
+    if (!String(form.category || '').trim() || !String(form.description || '').trim()) { notify('Category and reason are required.', 'warning'); return; }
+    const payload = {
+      spendingDate: form.spendingDate,
+      category: String(form.category).trim(),
+      description: String(form.description).trim(),
+      amount,
+      paymentMode: form.paymentMode || 'CASH',
+      paidTo: form.paidTo || null,
+      referenceNo: form.referenceNo || null,
+      notes: form.notes || null,
+    };
+    setBusy(true);
+    try {
+      const editing = modal === 'spending-edit';
+      await apiRequest(editing ? '/spendings/' + encodeURIComponent(form.id) : '/spendings', {
+        method: editing ? 'PATCH' : 'POST', token, body: payload,
+      });
+      notify(editing ? 'Spending record updated.' : 'Spending recorded successfully.', 'success');
+      setModal('');
+      setRefreshKey(value => value + 1);
+    } catch (error) {
+      notify(error.message || 'Could not save spending record.', 'warning');
+      if (error.status === 401 && onUnauthorizedRef.current) onUnauthorizedRef.current();
+    } finally { setBusy(false); }
+  };
+
+  const submitVoidSpending = async event => {
+    event.preventDefault();
+    if (busy) return;
+    const reason = String(form.voidReason || '').trim();
+    if (reason.length < 5) { notify('Enter a void reason of at least 5 characters.', 'warning'); return; }
+    setBusy(true);
+    try {
+      await apiRequest('/spendings/' + encodeURIComponent(form.id) + '/void', {
+        method: 'POST', token, body: { reason },
+      });
+      notify('Spending voided. The original record remains in history.', 'success');
+      setModal('');
+      setRefreshKey(value => value + 1);
+    } catch (error) {
+      notify(error.message || 'Could not void spending record.', 'warning');
+      if (error.status === 401 && onUnauthorizedRef.current) onUnauthorizedRef.current();
+    } finally { setBusy(false); }
+  };
+
   const submitCreate = async event => {
     event.preventDefault();
     if (busy) return;
