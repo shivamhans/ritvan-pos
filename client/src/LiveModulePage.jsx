@@ -104,6 +104,13 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   const [creditLedger, setCreditLedger] = useState(null);
   const [staff, setStaff] = useState([]);
   const [returnsRows, setReturnsRows] = useState([]);
+  const [spendings, setSpendings] = useState([]);
+  const [spendingSummary, setSpendingSummary] = useState(null);
+  const [spendingFrom, setSpendingFrom] = useState(() => { const date = new Date(); date.setDate(date.getDate() - 29); return localDateInput(date); });
+  const [spendingTo, setSpendingTo] = useState(() => localDateInput(new Date()));
+  const [spendingQuery, setSpendingQuery] = useState('');
+  const [productQuery, setProductQuery] = useState('');
+  const [productSort, setProductSort] = useState('netSales');
   const [settings, setSettings] = useState(null);
   const [reportData, setReportData] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
