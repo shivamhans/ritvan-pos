@@ -851,6 +851,62 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
       <div className="live-metric-card"><span className="live-metric-icon metric-icon-green"><CircleCheck size={18}/></span><div><small>Data source</small><strong className="live-source-label">MySQL via API</strong></div></div>
     </div>}
 
+    {page === 'Spendings' && <section className="spending-page-workspace">
+      <section className="panel spending-filter-panel">
+        <div className="spending-filter-copy"><div className="eyebrow">SPENDING PERIOD</div><b>Track where your money goes</b><small>Only recorded entries count toward totals. Voided entries remain visible for audit history.</small></div>
+        <div className="toolbar-controls spending-period-controls">
+          <Field label="From"><input className="form-input report-date" type="date" max={spendingTo} value={spendingFrom} onChange={event=>setSpendingFrom(event.target.value)}/></Field>
+          <Field label="To"><input className="form-input report-date" type="date" min={spendingFrom} value={spendingTo} onChange={event=>setSpendingTo(event.target.value)}/></Field>
+          <LiveButton icon={RefreshCw} onClick={refresh}>Refresh</LiveButton>
+        </div>
+      </section>
+
+      <div className="spending-summary-grid">
+        <div className="spending-summary-card spending-summary-primary"><span className="spending-summary-icon"><Wallet size={18}/></span><small>Total operating spendings</small><strong>{loading ? '—' : cash(spendingSummary?.totalAmount || 0)}</strong><span>Recorded entries · selected period</span></div>
+        <div className="spending-summary-card"><span className="spending-summary-icon spending-summary-blue"><ReceiptText size={18}/></span><small>Recorded entries</small><strong>{loading ? '—' : Number(spendingSummary?.spendingCount || 0).toLocaleString('en-IN')}</strong><span>Voided records excluded</span></div>
+        <div className="spending-summary-card"><span className="spending-summary-icon spending-summary-green"><CalendarDays size={18}/></span><small>Today's spendings</small><strong>{loading ? '—' : cash(spendingSummary?.todayAmount || 0)}</strong><span>Across all recorded categories</span></div>
+        <div className="spending-summary-card"><span className="spending-summary-icon spending-summary-amber"><CalendarDays size={18}/></span><small>This month</small><strong>{loading ? '—' : cash(spendingSummary?.monthAmount || 0)}</strong><span>Month-to-date operating cost</span></div>
+      </div>
+
+      <div className="spending-breakdown-grid">
+        <section className="panel spending-breakdown-panel">
+          <div className="panel-head"><div><h2>Spending by category</h2><p>Where operating money is going in this date range.</p></div><Wallet size={18} color="var(--violet)"/></div>
+          {loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Calculating category totals…</span></div>
+          : spendingSummary?.categories?.length ? <div className="spending-category-list">{spendingSummary.categories.map(row=>{
+            const max = Math.max(1,...spendingSummary.categories.map(item=>Number(item.amount||0)));
+            return <div className="spending-category-row" key={row.category}><div className="spending-category-heading"><b>{row.category}</b><span>{cash(row.amount)} <small>{row.recordCount} record{Number(row.recordCount)===1?'':'s'}</small></span></div><div className="spending-category-track"><i style={{width:(Number(row.amount||0)/max*100)+'%'}}/></div></div>;
+          })}</div> : <BlankState title="No category activity" text="Recorded spendings will be grouped here automatically."/>}
+        </section>
+        <section className="panel spending-breakdown-panel">
+          <div className="panel-head"><div><h2>Payment methods</h2><p>How operating spendings were paid.</p></div><CreditCard size={18} color="var(--violet)"/></div>
+          {loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Calculating payment totals…</span></div>
+          : spendingSummary?.paymentModes?.length ? <div className="spending-payment-list">{spendingSummary.paymentModes.map(row=><div className="spending-payment-row" key={row.paymentMode}><div><span className="spending-payment-dot"/><b>{prettyStatus(row.paymentMode)}</b><small>{row.recordCount} payment{Number(row.recordCount)===1?'':'s'}</small></div><strong>{cash(row.amount)}</strong></div>)}</div>
+          : <BlankState title="No payments recorded" text="Payment mode totals will appear when you add spendings."/>}
+        </section>
+      </div>
+
+      <section className="panel live-section spending-records-panel">
+        <div className="panel-head"><div><h2>Spending ledger</h2><p>Search, review and correct operating expense entries. Voiding keeps the original record for audit.</p></div><div className="toolbar-controls"><div className="search-box compact"><Search size={16}/><input placeholder="Search reason, category, payee…" value={spendingQuery} onChange={event=>setSpendingQuery(event.target.value)}/><button className="icon-button small" onClick={()=>setSpendingQuery('')} title="Clear search"><X size={14}/></button></div></div></div>
+        {pageError && <div className="live-error"><AlertTriangle size={16}/><span>{pageError}</span><LiveButton icon={RefreshCw} onClick={refresh}>Retry</LiveButton></div>}
+        {loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Loading spending ledger…</span></div>
+        : spendings.filter(row=>[row.description,row.category,row.paidTo,row.referenceNo,row.paymentMode,row.status].some(value=>String(value||'').toLowerCase().includes(spendingQuery.trim().toLowerCase()))).length ? <div className="table-wrap"><table className="spending-table"><thead><tr><th>DATE</th><th>REASON / PAYEE</th><th>CATEGORY</th><th>PAYMENT</th><th>AMOUNT</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
+          {spendings.filter(row=>[row.description,row.category,row.paidTo,row.referenceNo,row.paymentMode,row.status].some(value=>String(value||'').toLowerCase().includes(spendingQuery.trim().toLowerCase()))).map(row=><tr key={row.id}>
+            <td><b>{asDate(row.spendingDate)}</b><small className="live-cell-sub">#{row.id}</small></td>
+            <td><b>{row.description}</b><small className="live-cell-sub">{row.paidTo ? 'Paid to '+row.paidTo : row.notes || row.referenceNo || 'No extra details'}</small></td>
+            <td><span className="spending-category-chip">{row.category}</span></td>
+            <td>{prettyStatus(row.paymentMode)}</td>
+            <td><b className="spending-amount">{cash(row.amount)}</b></td>
+            <td><StatusPill value={row.status}/></td>
+            <td><div className="table-action-group">{row.status==='RECORDED' && canManage && <>
+              <button className="icon-button small" title="Edit spending" aria-label="Edit spending" onClick={()=>{setForm({id:row.id,spendingDate:row.spendingDate,category:row.category,description:row.description,amount:String(row.amount),paymentMode:row.paymentMode,paidTo:row.paidTo||'',referenceNo:row.referenceNo||'',notes:row.notes||''});setModal('spending-edit');}}><Pencil size={15}/></button>
+              <button className="icon-button small spending-void-button" title="Void spending" aria-label="Void spending" onClick={()=>{setForm({id:row.id,description:row.description,voidReason:''});setModal('spending-void');}}><X size={15}/></button>
+            </>}</div></td>
+          </tr>)}
+        </tbody></table></div> : <BlankState title={spendingQuery ? 'No matching spendings' : 'No spendings in this period'} text={spendingQuery ? 'Try another keyword or clear your search.' : 'Record rent, bills, transport, repairs, packaging or other operating costs to start your spending ledger.'} onAdd={canManage ? ()=>{const today=localDateInput(new Date());setForm({spendingDate:today,category:'Utilities',description:'',amount:'',paymentMode:'CASH',paidTo:'',referenceNo:'',notes:''});setModal('spending-create');} : undefined} addLabel="Add first spending"/>}
+        <div className="table-footer"><span>{loading ? 'Loading…' : spendings.length+' record'+(spendings.length===1?'':'s')+' in selected period'}</span><span className="muted">Recorded totals exclude voided entries</span></div>
+      </section>
+    </section>}
+
     {page === 'Staff & Roles' && <section className="panel live-section">
       <div className="panel-head"><div><h2>Team accounts</h2><p>Only active Admins can create staff, reset passwords, and adjust roles.</p></div><StatusPill value={staff.filter(row=>Boolean(Number(row.isActive))).length ? 'ACTIVE' : 'INACTIVE'}/></div>
       {loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Loading staff accounts…</span></div>
