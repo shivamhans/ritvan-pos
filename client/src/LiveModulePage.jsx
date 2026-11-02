@@ -214,10 +214,11 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     if (page === 'Transactions') return transactions.filter(row => [row.receiptNo, row.customer, row.cashier, row.paymentMethod, row.method, row.status].some(match));
     if (page === 'Staff & Roles') return staff.filter(row => [row.name, row.email, row.role].some(match));
     if (page === 'Returns & Refunds') return returnsRows.filter(row => [row.returnNo, row.receiptNo, row.customer, row.status, row.refundMethod].some(match));
+    if (page === 'Spendings') return spendings.filter(row => [row.description, row.category, row.paidTo, row.referenceNo, row.paymentMode, row.status].some(match));
     return [];
-  }, [page, query, items, categories, suppliers, customers, purchases, transactions, staff, returnsRows]);
+  }, [page, query, items, categories, suppliers, customers, purchases, transactions, staff, returnsRows, spendings]);
 
-  const currentRows = filtered || (page === 'Items' || page === 'Inventory' ? items : page === 'Categories' ? categories : page === 'Suppliers' ? suppliers : page === 'Customers' ? customers : page === 'Purchases' ? purchases : page === 'Staff & Roles' ? staff : page === 'Returns & Refunds' ? returnsRows : transactions);
+  const currentRows = filtered || (page === 'Items' || page === 'Inventory' ? items : page === 'Categories' ? categories : page === 'Suppliers' ? suppliers : page === 'Customers' ? customers : page === 'Purchases' ? purchases : page === 'Staff & Roles' ? staff : page === 'Returns & Refunds' ? returnsRows : page === 'Spendings' ? spendings : transactions);
   const setValue = (key, value) => setForm(old => ({ ...old, [key]: value }));
 
   const handleItemPhoto = async event => {
