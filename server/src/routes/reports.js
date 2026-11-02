@@ -149,7 +149,7 @@ router.get('/summary', async (req, res, next) => {
         categories: spendCategoryRows.map(row => ({ category: row.category, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
         paymentModes: spendPaymentRows.map(row => ({ paymentMode: row.paymentMode, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
       };
-      recentSpendings = recentSpendingRows.map(row => ({ ...row, id: Number(row.id), spendingDate: String(row.spendingDate).slice(0, 10), amount: money2(row.amount) }));
+      recentSpendings = recentSpendingRows.map(row => ({ ...row, id: Number(row.id), spendingDate: dateString(new Date(row.spendingDate)), amount: money2(row.amount) }));
       } catch (error) {
         if (error.code === 'ER_NO_SUCH_TABLE' && String(error.message || '').includes('spendings')) {
           spendingTrackingAvailable = false;
