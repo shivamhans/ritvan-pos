@@ -82,6 +82,32 @@ router.get('/summary', async (req, res, next) => {
       GROUP BY si.item_id, si.item_name_snapshot, si.sku_snapshot
       ORDER BY unitsSold DESC, salesAmount DESC LIMIT 5
     `, [from, to]);
+    const [productSalesRows] = await pool.execute(`
+      SELECT si.item_id AS itemId, si.item_name_snapshot AS name, si.sku_snapshot AS sku,
+        SUM(si.quantity) AS unitsSold,
+        SUM(COALESCE(returned.returnedQuantity, 0)) AS unitsReturned,
+        ROUND(SUM(si.quantity * si.unit_price_actual), 2) AS grossSales,
+        ROUND(SUM(COALESCE(si.discount_amount, 0) + CASE WHEN s.subtotal > 0
+          THEN s.discount_total * (si.quantity * si.unit_price_actual) / s.subtotal ELSE 0 END), 2) AS discountAmount,
+        ROUND(SUM(COALESCE(returned.refundedAmount, 0)), 2) AS refundAmount,
+        ROUND(SUM(si.quantity * si.unit_price_actual)
+          - SUM(COALESCE(si.discount_amount, 0) + CASE WHEN s.subtotal > 0
+            THEN s.discount_total * (si.quantity * si.unit_price_actual) / s.subtotal ELSE 0 END)
+          - SUM(COALESCE(returned.refundedAmount, 0)), 2) AS netSales
+      FROM sale_items si
+      JOIN sales s ON s.id = si.sale_id
+      LEFT JOIN (
+        SELECT ri.sale_item_id, SUM(ri.quantity) AS returnedQuantity,
+          SUM(ri.refund_amount) AS refundedAmount
+        FROM return_items ri JOIN returns r ON r.id = ri.return_id
+        WHERE r.status = 'COMPLETED' AND DATE(r.completed_at) BETWEEN ? AND ?
+        GROUP BY ri.sale_item_id
+      ) returned ON returned.sale_item_id = si.id
+      WHERE s.status = 'COMPLETED' AND DATE(s.completed_at) BETWEEN ? AND ?
+      GROUP BY si.item_id, si.item_name_snapshot, si.sku_snapshot
+      ORDER BY netSales DESC, unitsSold DESC
+      LIMIT 250
+    `, [from, to, from, to]);
     const [khataRows] = await pool.execute(`
       SELECT COALESCE(SUM(balance), 0) AS outstandingTotal, COUNT(*) AS customersOwing
       FROM (
@@ -89,6 +115,44 @@ router.get('/summary', async (req, res, next) => {
         FROM customer_credit_ledger GROUP BY customer_id
       ) balances WHERE balance > 0
     `);
+    let spendingTrackingAvailable = true;
+    let spendingSummary = { totalAmount: 0, spendingCount: 0, categories: [], paymentModes: [] };
+    let recentSpendings = [];
+    try {
+      const [spendSummaryRows] = await pool.execute(`
+        SELECT COUNT(*) AS spendingCount, COALESCE(SUM(amount), 0) AS totalAmount
+        FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
+      `, [from, to]);
+      const [spendCategoryRows] = await pool.execute(`
+        SELECT category, COUNT(*) AS recordCount, COALESCE(SUM(amount), 0) AS amount
+        FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
+        GROUP BY category ORDER BY amount DESC, category LIMIT 8
+      `, [from, to]);
+      const [spendPaymentRows] = await pool.execute(`
+        SELECT payment_mode AS paymentMode, COUNT(*) AS recordCount, COALESCE(SUM(amount), 0) AS amount
+        FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
+        GROUP BY payment_mode ORDER BY amount DESC
+      `, [from, to]);
+      const [recentSpendingRows] = await pool.execute(`
+        SELECT id, spending_date AS spendingDate, category, description, amount,
+          payment_mode AS paymentMode, paid_to AS paidTo
+        FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
+        ORDER BY spending_date DESC, id DESC LIMIT 5
+      `, [from, to]);
+      spendingSummary = {
+        totalAmount: money2(spendSummaryRows[0]?.totalAmount || 0),
+        spendingCount: Number(spendSummaryRows[0]?.spendingCount || 0),
+        categories: spendCategoryRows.map(row => ({ category: row.category, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
+        paymentModes: spendPaymentRows.map(row => ({ paymentMode: row.paymentMode, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
+      };
+      recentSpendings = recentSpendingRows.map(row => ({ ...row, id: Number(row.id), spendingDate: String(row.spendingDate).slice(0, 10), amount: money2(row.amount) }));
+    } catch (error) {
+      if (error.code === 'ER_NO_SUCH_TABLE' && String(error.message || '').includes('spendings')) {
+        spendingTrackingAvailable = false;
+      } else {
+        throw error;
+      }
+    }
     const mayViewKhata = req.user.role === 'Admin' || (
       req.user.permissions?.modules?.includes('Customers') &&
       req.user.permissions?.columns?.Customers?.includes('outstandingBalance')
@@ -118,6 +182,25 @@ router.get('/summary', async (req, res, next) => {
     const provisionalQuantity = Number(cost.provisionalQuantity || 0) + Number(restockRows[0].provisionalReturnQuantity || 0);
     const cogs = money2(Number(cost.soldCost) - Number(restockRows[0].restockedCost));
     const grossProfit = provisionalQuantity > 0 ? null : money2(netRevenue - cogs);
+    const productSales = productSalesRows.map(row => ({
+      ...row,
+      itemId: Number(row.itemId),
+      unitsSold: Number(row.unitsSold || 0),
+      unitsReturned: Number(row.unitsReturned || 0),
+      grossSales: money2(row.grossSales),
+      discountAmount: money2(row.discountAmount),
+      refundAmount: money2(row.refundAmount),
+      netSales: money2(row.netSales),
+    }));
+    const productSalesSummary = productSales.reduce((totals, row) => ({
+      unitsSold: totals.unitsSold + row.unitsSold,
+      unitsReturned: totals.unitsReturned + row.unitsReturned,
+      grossSales: money2(totals.grossSales + row.grossSales),
+      discountAmount: money2(totals.discountAmount + row.discountAmount),
+      refundAmount: money2(totals.refundAmount + row.refundAmount),
+      netSales: money2(totals.netSales + row.netSales),
+    }), { unitsSold: 0, unitsReturned: 0, grossSales: 0, discountAmount: 0, refundAmount: 0, netSales: 0 });
+
     const salesByDay = new Map(dailySales.map(row => [dateString(new Date(row.day)), Number(row.amount)]));
     const refundsByDay = new Map(dailyReturns.map(row => [dateString(new Date(row.day)), Number(row.amount)]));
     const daily = [];
@@ -149,12 +232,20 @@ router.get('/summary', async (req, res, next) => {
         customersOwing: mayViewKhata ? Number(khataRows[0]?.customersOwing || 0) : null,
         creditSalesTotal: mayViewKhata ? money2(creditSalesRows[0]?.creditSalesTotal || 0) : null,
         creditSalesCount: mayViewKhata ? Number(creditSalesRows[0]?.creditSalesCount || 0) : null,
+        spendingTrackingAvailable,
+        operatingSpendings: spendingTrackingAvailable ? spendingSummary.totalAmount : null,
+        operatingSpendingCount: spendingTrackingAvailable ? spendingSummary.spendingCount : null,
       },
       payments: paymentRows.map(row => ({ method: row.method, paymentCount: Number(row.paymentCount), amount: money2(row.amount) })),
       daily,
       recentTransactions: recent.map(row => ({ ...row, totalAmount: money2(row.totalAmount) })),
       topSellingProducts: topSellingRows.map(row => ({ ...row, unitsSold: Number(row.unitsSold || 0), salesAmount: money2(row.salesAmount) })),
-      notes: ['Net revenue subtracts refunds completed in the selected period.', 'Gross profit is hidden when sales or restock lines in the period include provisional cost snapshots.', 'Net profit is not reported because an expense module is not present.'],
+      productSales,
+      productSalesSummary,
+      spendingSummary: spendingTrackingAvailable ? spendingSummary : null,
+      recentSpendings,
+      spendingTrackingAvailable,
+      notes: ['Net revenue subtracts refunds completed in the selected period.', 'Gross profit is hidden when sales or restock lines in the period include provisional cost snapshots.', 'Operating spendings are shown separately from employee expense deductions and payroll; this report does not combine all cost categories into net profit.'],
     });
   } catch (error) { next(error); }
 });
