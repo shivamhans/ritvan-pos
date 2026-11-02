@@ -85,11 +85,15 @@ router.get('/', async (req, res, next) => {
       ORDER BY s.spending_date DESC, s.id DESC LIMIT 500
     `, params);
     const [summaryRows] = await pool.execute(`
-      SELECT COUNT(*) AS spendingCount, COALESCE(SUM(amount), 0) AS totalAmount,
-        COALESCE(SUM(CASE WHEN spending_date = CURDATE() THEN amount ELSE 0 END), 0) AS todayAmount,
-        COALESCE(SUM(CASE WHEN DATE_FORMAT(spending_date, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m') THEN amount ELSE 0 END), 0) AS monthAmount
+      SELECT COUNT(*) AS spendingCount, COALESCE(SUM(amount), 0) AS totalAmount
       FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
     `, [from, to]);
+    const [currentPeriodRows] = await pool.execute(`
+      SELECT
+        COALESCE(SUM(CASE WHEN spending_date = CURDATE() THEN amount ELSE 0 END), 0) AS todayAmount,
+        COALESCE(SUM(CASE WHEN spending_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND spending_date <= CURDATE() THEN amount ELSE 0 END), 0) AS monthAmount
+      FROM spendings WHERE status = 'RECORDED'
+    `);
     const [categoryRows] = await pool.execute(`
       SELECT category, COUNT(*) AS recordCount, COALESCE(SUM(amount), 0) AS amount
       FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
@@ -106,8 +110,8 @@ router.get('/', async (req, res, next) => {
       summary: {
         spendingCount: Number(summary.spendingCount || 0),
         totalAmount: money2(summary.totalAmount),
-        todayAmount: money2(summary.todayAmount),
-        monthAmount: money2(summary.monthAmount),
+        todayAmount: money2(currentPeriodRows[0]?.todayAmount || 0),
+        monthAmount: money2(currentPeriodRows[0]?.monthAmount || 0),
         categories: categoryRows.map(row => ({ category: row.category, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
         paymentModes: paymentRows.map(row => ({ paymentMode: row.paymentMode, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
       },
