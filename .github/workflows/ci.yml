@@ -49,5 +49,6 @@ jobs:
           node --check server/src/routes/returns.js
           node --check server/src/routes/settings.js
           node --check server/src/routes/reports.js
+          node --check server/src/routes/spendings.js
           node --check server/src/seed-admin.js
           node --check server/src/reset-user-password.js
