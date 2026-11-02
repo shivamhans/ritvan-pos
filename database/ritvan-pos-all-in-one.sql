@@ -1,5 +1,5 @@
 -- RITVAN POS — CONSOLIDATED INSTALL + SAFE SCHEMA UPGRADER (MySQL 8.0+)
--- Replaces the need to run schema.sql and Phase 4–10 upgrade scripts separately.
+-- Replaces the need to run schema.sql and Phase 4–11 upgrade scripts separately.
 --
 -- IMPORTANT DATA-SAFETY RULES
 -- 1. BACK UP the target database before running this script.
