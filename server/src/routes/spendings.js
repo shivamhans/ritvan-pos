@@ -5,8 +5,12 @@ import { requireModuleAccessFor } from '../middleware/permissions.js';
 
 const router = Router();
 const PAYMENT_MODES = ['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'OTHER'];
-const isoDate = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) && !Number.isNaN(Date.parse(String(value) + 'T00:00:00Z'));
-const money2 = value => Number(Number(value || 0).toFixed(2));
+const isoDate = value => {
+  const text = String(value || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const date = new Date(text + 'T00:00:00Z');
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === text;
+};const money2 = value => Number(Number(value || 0).toFixed(2));
 const validId = value => Number.isSafeInteger(Number(value)) && Number(value) > 0;
 const dateOnly = value => value instanceof Date ? value.toISOString().slice(0, 10) : String(value || '').slice(0, 10);
 const normalize = row => ({
@@ -92,7 +96,7 @@ router.get('/', async (req, res, next) => {
       SELECT
         COALESCE(SUM(CASE WHEN spending_date = CURDATE() THEN amount ELSE 0 END), 0) AS todayAmount,
         COALESCE(SUM(CASE WHEN spending_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND spending_date <= CURDATE() THEN amount ELSE 0 END), 0) AS monthAmount
-      FROM spendings WHERE status = 'RECORDED'
+      FROM spendings WHERE status = 'RECORDED' AND spending_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
     `);
     const [categoryRows] = await pool.execute(`
       SELECT category, COUNT(*) AS recordCount, COALESCE(SUM(amount), 0) AS amount
