@@ -167,6 +167,9 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
         } else if (page === 'Returns & Refunds') {
           const data = await get('/returns');
           if (!cancelled) setReturnsRows(data.returns || []);
+        } else if (page === 'Spendings') {
+          const data = await get('/spendings?from=' + encodeURIComponent(spendingFrom) + '&to=' + encodeURIComponent(spendingTo));
+          if (!cancelled) { setSpendings(data.spendings || []); setSpendingSummary(data.summary || null); }
         } else if (page === 'Settings') {
           const data = await get('/settings');
           if (!cancelled) setSettings(data.settings || null);
@@ -183,7 +186,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     if (token) run();
     else { setLoading(false); setPageError('Sign in to access database-backed records.'); }
     return () => { cancelled = true; };
-  }, [page, token, refreshKey, canManage, setItems]);
+  }, [page, token, refreshKey, canManage, setItems, spendingFrom, spendingTo]);
 
   useEffect(() => {
     if (page !== 'Reports' || !token) return;
