@@ -991,7 +991,9 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
             <div><small>Completed sales</small><strong>{reportData.summary.completedSales}</strong><span>{reportData.summary.completedReturns} completed returns</span></div>
             <div><small>Gross profit</small><strong>{reportData.summary.grossProfitAvailable ? reportMoney(reportData.summary.grossProfit) : '—'}</strong><span>{reportData.summary.grossProfitAvailable ? 'Uses saved cost snapshots' : 'Withheld: provisional costs exist'}</span></div>
             <div><small>Inventory cost value</small><strong>{reportMoney(reportData.summary.inventoryCostValue)}</strong><span>{reportData.summary.activeItems} active items</span></div>
+            {reportData.spendingTrackingAvailable && <div><small>Operating spendings</small><strong>{reportMoney(reportData.summary.operatingSpendings)}</strong><span>{Number(reportData.summary.operatingSpendingCount || 0)} recorded entries · selected period</span></div>}
           </div>
+          {reportData.spendingTrackingAvailable === false && <div className="info-callout"><AlertTriangle size={16}/><span>Operating spendings are not installed in this database yet. Back up the database, then run the updated database/ritvan-pos-all-in-one.sql to enable spending reports.</span></div>}
           <div className="live-report-chart-grid">
             <div className="panel live-report-chart-panel"><div className="panel-head"><div><h2>Daily sales & refunds</h2><p>Sales and refunds by completion date · net revenue = sales − refunds · {reportData.period.from} to {reportData.period.to}</p></div></div>
               <div className="live-report-chart-legend"><span><i className="live-report-legend-sales"/>Sales</span><span><i className="live-report-legend-refunds"/>Refunds</span><small>Net revenue is the sales total less refunds.</small></div>
