@@ -258,6 +258,30 @@ CREATE TABLE IF NOT EXISTS return_items (
   INDEX idx_return_items_sale_item (sale_item_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS spendings (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  spending_date DATE NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  description VARCHAR(255) NOT NULL,
+  amount DECIMAL(18,2) NOT NULL,
+  payment_mode ENUM('CASH','UPI','CARD','BANK_TRANSFER','OTHER') NOT NULL,
+  paid_to VARCHAR(140) NULL,
+  reference_no VARCHAR(120) NULL,
+  notes VARCHAR(500) NULL,
+  status ENUM('RECORDED','VOID') NOT NULL DEFAULT 'RECORDED',
+  void_reason VARCHAR(500) NULL,
+  created_by BIGINT UNSIGNED NULL,
+  updated_by BIGINT UNSIGNED NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_spendings_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_spendings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT chk_spendings_amount CHECK (amount > 0),
+  INDEX idx_spendings_date_status (spending_date, status, id),
+  INDEX idx_spendings_category_date (category, spending_date),
+  INDEX idx_spendings_payment_date (payment_mode, spending_date)
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS audit_logs (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NULL,
