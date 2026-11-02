@@ -115,10 +115,14 @@ router.get('/summary', async (req, res, next) => {
         FROM customer_credit_ledger GROUP BY customer_id
       ) balances WHERE balance > 0
     `);
-    let spendingTrackingAvailable = true;
-    let spendingSummary = { totalAmount: 0, spendingCount: 0, categories: [], paymentModes: [] };
+    const mayViewSpendings = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Spendings'));
+    let spendingTrackingAvailable = null;
+    let spendingSummary = null;
     let recentSpendings = [];
-    try {
+    if (mayViewSpendings) {
+      spendingTrackingAvailable = true;
+      spendingSummary = { totalAmount: 0, spendingCount: 0, categories: [], paymentModes: [] };
+      try {
       const [spendSummaryRows] = await pool.execute(`
         SELECT COUNT(*) AS spendingCount, COALESCE(SUM(amount), 0) AS totalAmount
         FROM spendings WHERE status = 'RECORDED' AND spending_date BETWEEN ? AND ?
@@ -146,11 +150,12 @@ router.get('/summary', async (req, res, next) => {
         paymentModes: spendPaymentRows.map(row => ({ paymentMode: row.paymentMode, recordCount: Number(row.recordCount), amount: money2(row.amount) })),
       };
       recentSpendings = recentSpendingRows.map(row => ({ ...row, id: Number(row.id), spendingDate: String(row.spendingDate).slice(0, 10), amount: money2(row.amount) }));
-    } catch (error) {
-      if (error.code === 'ER_NO_SUCH_TABLE' && String(error.message || '').includes('spendings')) {
-        spendingTrackingAvailable = false;
-      } else {
-        throw error;
+      } catch (error) {
+        if (error.code === 'ER_NO_SUCH_TABLE' && String(error.message || '').includes('spendings')) {
+          spendingTrackingAvailable = false;
+        } else {
+          throw error;
+        }
       }
     }
     const mayViewKhata = req.user.role === 'Admin' || (
