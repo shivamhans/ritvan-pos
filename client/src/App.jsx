@@ -166,7 +166,7 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
   const unavailable = message => <EmptyState icon={reportError ? AlertTriangle : Package} title={reportError ? 'Dashboard data unavailable' : 'No data for this period'} text={message}/>;
 
   return <>
-    <SectionTitle eyebrow={headingDate} title={greeting + ', ' + firstName + ' ✨'} subtitle="Here's what's happening with your store today." action={<><select className="select-control dashboard-range" value={rangeDays} onChange={event => setRangeDays(Number(event.target.value))} aria-label="Reporting period"><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option></select><Button variant="primary" icon={Plus} onClick={() => onNavigate('Point of Sale')}>New sale</Button></>} />
+    <SectionTitle eyebrow={headingDate} title={greeting + ', ' + firstName + ' ✨'} subtitle="Here's what's happening with your store today." action={<><select className="select-control dashboard-range" value={rangeDays} onChange={event => setRangeDays(Number(event.target.value))} aria-label="Reporting period"><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option></select><Button icon={Wallet} onClick={() => onNavigate('Spendings')}>Spendings</Button><Button variant="primary" icon={Plus} onClick={() => onNavigate('Point of Sale')}>New sale</Button></>} />
     {demo && <div className="live-info-banner"><CircleHelp size={17}/><span><b>Demo workspace.</b> The figures below are illustrative sample data and are not saved to your database. Sign in to view live figures.</span></div>}
     {isLive && reportError && <div className="live-error"><AlertTriangle size={17}/><span>{reportError}</span><Button icon={RefreshCw} onClick={() => setRefreshKey(value => value + 1)}>Retry</Button></div>}
     {isLive && !reportError && reportData && <div className="live-info-banner"><CircleCheck size={17}/><span><b>Live business data.</b> Metrics below come from saved records for {reportData.period.from} through {reportData.period.to}. Figures are not estimated.</span></div>}
@@ -175,6 +175,7 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
       <StatCard icon={ShoppingBag} label="Completed sales" value={loading ? '—' : hasData ? String(orders ?? 0) : '—'} change={demo ? '8.2%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">Voided sales excluded</span>} accent="blue"/>
       <StatCard icon={TrendingUp} label="Gross profit" value={loading ? '—' : !hasData ? '—' : demo ? formatAmount(grossProfit) : summary?.grossProfitAvailable ? formatAmount(grossProfit) : 'Unavailable'} change={demo ? '6.4%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">{summary?.grossProfitAvailable ? 'Based on saved cost snapshots' : 'Provisional costs prevent a reliable figure'}</span>} accent="green"/>
       <StatCard icon={Package} label="Inventory cost value" value={loading ? '—' : hasData ? formatAmount(inventoryValue) : '—'} change={demo ? '2.1%' : undefined} trend="down" note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">Quantity on hand × average cost</span>} accent="amber"/>
+      <StatCard icon={Wallet} label="Operating spendings" value={loading ? '—' : demo ? '—' : !reportData?.spendingTrackingAvailable ? 'Setup required' : formatAmount(summary?.operatingSpendings || 0)} note={demo ? <span className="muted">Sign in to view saved spendings</span> : !reportData?.spendingTrackingAvailable ? <span className="muted">Run the updated database installer</span> : <span className="muted">{Number(summary?.operatingSpendingCount || 0)} recorded entries in this period</span>} accent="amber"/>
     </div>
     <div className="dashboard-main-grid">
       <section className="panel chart-panel">
@@ -233,6 +234,10 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
       </section>
       </div>
     </div>
+    {isLive && <section className="panel dashboard-spending-preview">
+      <div className="panel-head"><div><h2>Recent operating spendings</h2><p>Saved day-to-day expenses for the selected dashboard period.</p></div><Button variant="text" onClick={() => onNavigate('Spendings')}>View spending ledger <ArrowRight size={14}/></Button></div>
+      {!reportData?.spendingTrackingAvailable && !loading ? <EmptyState icon={Wallet} title="Spending ledger needs setup" text="Run the updated database/ritvan-pos-all-in-one.sql once to enable operating spendings."/> : loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Loading spending entries…</span></div> : (reportData?.recentSpendings || []).length ? <div className="dashboard-spending-list">{reportData.recentSpendings.map(row=><div className="dashboard-spending-row" key={row.id}><span className="dashboard-spending-date">{new Date(row.spendingDate + 'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span><div className="dashboard-spending-copy"><b>{row.description}</b><small>{row.category}{row.paidTo ? ' · '+row.paidTo : ''}</small></div><strong>{formatAmount(row.amount)}</strong></div>)}</div> : <EmptyState icon={Wallet} title="No operating spendings recorded" text="Rent, bills, transport and other store costs will appear here once recorded."/>}
+    </section>}
   </>;
 }
 
