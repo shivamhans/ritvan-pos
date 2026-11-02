@@ -822,6 +822,28 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
 
   const reportMoney = value => (reportData?.currency?.currencySymbol || '₹') + Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const productAnalysisRows = (reportData?.productSales || [])
+    .filter(row => [row.name, row.sku].some(value => String(value || '').toLowerCase().includes(productQuery.trim().toLowerCase())))
+    .sort((a, b) => productSort === 'name'
+      ? String(a.name || '').localeCompare(String(b.name || ''))
+      : Number(b[productSort] || 0) - Number(a[productSort] || 0));
+
+  const exportProductAnalysisCsv = () => {
+    if (!reportData) return;
+    const rows = reportData.productSales || [];
+    const headers = ['itemId','name','sku','unitsSold','unitsReturned','grossSales','discountAmount','refundAmount','netSales'];
+    const csv = [headers.join(','), ...rows.map(row => headers.map(key => {
+      const value = row[key] ?? '';
+      return '"' + String(value).replace(/"/g, '""') + '"';
+    }).join(','))].join('\\r\\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'ritvan-item-sales-' + reportFrom + '-to-' + reportTo + '.csv';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportReportCsv = () => {
     if (!reportData) return;
     const rows = reportData.daily || [];
@@ -833,6 +855,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   const moduleActions = <>
     {!['Settings', 'Returns & Refunds', 'Reports'].includes(page) && <LiveButton icon={Download} onClick={exportData}>Export CSV</LiveButton>}
     {page === 'Reports' && <LiveButton icon={Download} onClick={exportReportCsv} disabled={!reportData}>Export CSV</LiveButton>}
+    {page === 'Reports' && <LiveButton icon={Download} onClick={exportProductAnalysisCsv} disabled={!reportData}>Export item analysis</LiveButton>}
     {page === 'Returns & Refunds' && <LiveButton variant="primary" icon={RotateCcw} onClick={() => { setForm({ receiptNo: '', reason: '', refundMethod: 'Cash', referenceNo: '' }); setReturnSale(null); setReturnLines([]); setModal('return-create'); }}>Start return</LiveButton>}
     {showCreate && <LiveButton variant="primary" icon={page === 'Purchases' ? PackagePlus : page === 'Inventory' ? Boxes : page === 'Staff & Roles' ? ShieldCheck : Plus} onClick={() => {
       if (page === 'Inventory') { setForm({ itemId: items[0]?.apiId || '', delta: '1', type: 'ADJUSTMENT', reason: '' }); setModal('adjust'); }
