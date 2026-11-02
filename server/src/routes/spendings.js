@@ -5,6 +5,9 @@ import { requireModuleAccessFor } from '../middleware/permissions.js';
 
 const router = Router();
 const PAYMENT_MODES = ['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'OTHER'];
+const missingSpendingsTable = error => error?.code === 'ER_NO_SUCH_TABLE' && /spendings/i.test(String(error.message || ''));
+const databaseSetupMessage = 'The spendings table is not installed yet. Back up the database, then run the updated database/ritvan-pos-all-in-one.sql against the active Ritvan database.';
+
 const isoDate = value => {
   const text = String(value || '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
@@ -123,9 +126,7 @@ router.get('/', async (req, res, next) => {
       limit: 500,
     });
   } catch (error) {
-    if (error.code === 'ER_NO_SUCH_TABLE' && String(error.message || '').includes('spendings')) {
-      return res.status(503).json({ error: 'The spendings table is not installed yet. Back up the database, then run the updated database/ritvan-pos-all-in-one.sql against the active Ritvan database.' });
-    }
+    if (missingSpendingsTable(error)) return res.status(503).json({ error: databaseSetupMessage });
     next(error);
   }
 });
@@ -148,6 +149,7 @@ router.post('/', async (req, res, next) => {
     res.status(201).json({ spending: after, message: 'Spending recorded.' });
   } catch (error) {
     await connection.rollback();
+    if (missingSpendingsTable(error)) return res.status(503).json({ error: databaseSetupMessage });
     next(error);
   } finally { connection.release(); }
 });
@@ -175,6 +177,7 @@ router.patch('/:id', async (req, res, next) => {
     res.json({ spending: after, message: 'Spending updated.' });
   } catch (error) {
     await connection.rollback();
+    if (missingSpendingsTable(error)) return res.status(503).json({ error: databaseSetupMessage });
     next(error);
   } finally { connection.release(); }
 });
@@ -197,6 +200,7 @@ router.post('/:id/void', async (req, res, next) => {
     res.json({ spending: after, message: 'Spending voided. The original record remains in history.' });
   } catch (error) {
     await connection.rollback();
+    if (missingSpendingsTable(error)) return res.status(503).json({ error: databaseSetupMessage });
     next(error);
   } finally { connection.release(); }
 });
