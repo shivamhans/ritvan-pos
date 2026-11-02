@@ -1,11 +1,11 @@
 export const ALL_MODULES = [
   'Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories',
-  'Purchases', 'Suppliers', 'Customers', 'Staff & Roles', 'Employees', 'Reports', 'Returns & Refunds', 'Settings',
+  'Purchases', 'Suppliers', 'Customers', 'Staff & Roles', 'Employees', 'Spendings', 'Reports', 'Returns & Refunds', 'Settings',
 ];
 
 export const ROLE_MODULES = {
   Admin: [...ALL_MODULES],
-  Manager: ['Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories', 'Purchases', 'Suppliers', 'Customers', 'Reports', 'Returns & Refunds'],
+  Manager: ['Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories', 'Purchases', 'Suppliers', 'Customers', 'Spendings', 'Reports', 'Returns & Refunds'],
   Cashier: ['Dashboard', 'Point of Sale', 'Transactions'],
 };
 
