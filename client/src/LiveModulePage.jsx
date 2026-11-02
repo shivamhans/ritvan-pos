@@ -844,6 +844,24 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     URL.revokeObjectURL(url);
   };
 
+  const exportSpendingsCsv = () => {
+    const normalizedQuery = spendingQuery.trim().toLowerCase();
+    const rows = spendings.filter(row => !normalizedQuery || [
+      row.description, row.category, row.paidTo, row.referenceNo, row.paymentMode, row.status,
+    ].some(value => String(value || '').toLowerCase().includes(normalizedQuery)));
+    const headers = ['id','spendingDate','category','description','amount','paymentMode','paidTo','referenceNo','notes','status','voidReason'];
+    const csv = [headers.join(','), ...rows.map(row => headers.map(key => {
+      const value = row[key] ?? '';
+      return '"' + String(value).replace(/"/g, '""') + '"';
+    }).join(','))].join('\\r\\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'ritvan-spendings-' + spendingFrom + '-to-' + spendingTo + '.csv';
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportReportCsv = () => {
     if (!reportData) return;
     const rows = reportData.daily || [];
@@ -853,7 +871,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   };
 
   const moduleActions = <>
-    {!['Settings', 'Returns & Refunds', 'Reports'].includes(page) && <LiveButton icon={Download} onClick={exportData}>Export CSV</LiveButton>}
+    {!['Settings', 'Returns & Refunds', 'Reports'].includes(page) && <LiveButton icon={Download} onClick={page === 'Spendings' ? exportSpendingsCsv : exportData}>Export CSV</LiveButton>}
     {page === 'Reports' && <LiveButton icon={Download} onClick={exportReportCsv} disabled={!reportData}>Export CSV</LiveButton>}
     {page === 'Reports' && <LiveButton icon={Download} onClick={exportProductAnalysisCsv} disabled={!reportData}>Export item analysis</LiveButton>}
     {page === 'Returns & Refunds' && <LiveButton variant="primary" icon={RotateCcw} onClick={() => { setForm({ receiptNo: '', reason: '', refundMethod: 'Cash', referenceNo: '' }); setReturnSale(null); setReturnLines([]); setModal('return-create'); }}>Start return</LiveButton>}
