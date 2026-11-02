@@ -796,9 +796,10 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   if (page === 'Staff & Roles') { title = 'Staff & roles'; subtitle = 'Create team accounts, reset passwords, and manage access.'; eyebrow = 'SECURITY & ACCESS'; Icon = ShieldCheck; addLabel = 'Invite staff'; }
   if (page === 'Returns & Refunds') { title = 'Returns & refunds'; subtitle = 'Process eligible sale lines with a traceable manual refund record.'; eyebrow = 'SALES ADJUSTMENTS'; Icon = RotateCcw; addLabel = 'Start return'; }
   if (page === 'Settings') { title = 'Business settings'; subtitle = 'Configure the store profile, currency, locale, and receipt footer.'; eyebrow = 'BUSINESS CONFIGURATION'; Icon = Save; }
-  if (page === 'Reports') { title = 'Reports & analytics'; subtitle = 'Sales, returns, inventory valuation, and cost-aware gross profit from saved records.'; eyebrow = 'LIVE BUSINESS INSIGHTS'; Icon = Wallet; }
+  if (page === 'Reports') { title = 'Reports & analytics'; subtitle = 'Sales, returns, inventory valuation, item performance, operating spendings, and cost-aware gross profit.'; eyebrow = 'LIVE BUSINESS INSIGHTS'; Icon = Wallet; }
+  if (page === 'Spendings') { title = 'Spendings'; subtitle = 'Record and analyse day-to-day operating expenses for your store.'; eyebrow = 'CASH FLOW / OPERATING COSTS'; Icon = Wallet; addLabel = 'Add spending'; }
   const filteredItems = filtered || items;
-  const statA = page === 'Items' || page === 'Inventory' ? filteredItems.length
+  const statA = page === 'Spendings' ? spendings.length : page === 'Items' || page === 'Inventory' ? filteredItems.length
     : page === 'Staff & Roles' ? currentRows.length
     : page === 'Returns & Refunds' ? currentRows.length
     : page === 'Categories' ? currentRows.length
@@ -813,9 +814,10 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     : page === 'Suppliers' ? suppliers.reduce((sum, row) => sum + Number(row.purchaseCount || 0), 0)
     : page === 'Categories' ? categories.reduce((sum, row) => sum + Number(row.itemCount || 0), 0)
     : page === 'Staff & Roles' ? staff.filter(row => Boolean(Number(row.isActive))).length
-    : page === 'Returns & Refunds' ? returnsRows.filter(row => String(row.status).toUpperCase() === 'COMPLETED').reduce((sum, row) => sum + Number(row.refundTotal || 0), 0) : 0;
-  const statBLabel = page === 'Inventory' ? 'Out of stock' : page === 'Items' ? 'Low stock items' : page === 'Purchases' ? 'Awaiting receipt' : page === 'Transactions' ? 'Completed sales' : page === 'Customers' ? 'Total customer spend' : page === 'Suppliers' ? 'Linked purchase orders' : page === 'Staff & Roles' ? 'Active accounts' : page === 'Returns & Refunds' ? 'Total refunds recorded' : 'Items assigned';
-  const liveCreateAllowed = page === 'Customers' || (page === 'Staff & Roles' ? role === 'Admin' : canManage);
+    : page === 'Returns & Refunds' ? returnsRows.filter(row => String(row.status).toUpperCase() === 'COMPLETED').reduce((sum, row) => sum + Number(row.refundTotal || 0), 0)
+    : page === 'Spendings' ? Number(spendingSummary?.totalAmount || 0) : 0;
+  const statBLabel = page === 'Spendings' ? 'Total recorded spendings' : page === 'Inventory' ? 'Out of stock' : page === 'Items' ? 'Low stock items' : page === 'Purchases' ? 'Awaiting receipt' : page === 'Transactions' ? 'Completed sales' : page === 'Customers' ? 'Total customer spend' : page === 'Suppliers' ? 'Linked purchase orders' : page === 'Staff & Roles' ? 'Active accounts' : page === 'Returns & Refunds' ? 'Total refunds recorded' : 'Items assigned';
+  const liveCreateAllowed = page === 'Customers' ? true : page === 'Staff & Roles' ? role === 'Admin' : canManage;
   const showCreate = !['Transactions', 'Reports', 'Settings', 'Returns & Refunds'].includes(page) && liveCreateAllowed;
 
   const reportMoney = value => (reportData?.currency?.currencySymbol || '₹') + Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -834,6 +836,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     {page === 'Returns & Refunds' && <LiveButton variant="primary" icon={RotateCcw} onClick={() => { setForm({ receiptNo: '', reason: '', refundMethod: 'Cash', referenceNo: '' }); setReturnSale(null); setReturnLines([]); setModal('return-create'); }}>Start return</LiveButton>}
     {showCreate && <LiveButton variant="primary" icon={page === 'Purchases' ? PackagePlus : page === 'Inventory' ? Boxes : page === 'Staff & Roles' ? ShieldCheck : Plus} onClick={() => {
       if (page === 'Inventory') { setForm({ itemId: items[0]?.apiId || '', delta: '1', type: 'ADJUSTMENT', reason: '' }); setModal('adjust'); }
+      else if (page === 'Spendings') { const today = localDateInput(new Date()); setForm({ spendingDate: today, category: 'Utilities', description: '', amount: '', paymentMode: 'CASH', paidTo: '', referenceNo: '', notes: '' }); setModal('spending-create'); }
       else openCreate();
     }}>{addLabel}</LiveButton>}
   </>;
@@ -843,7 +846,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     {pageError && <div className="live-error"><AlertTriangle size={17}/><span>{pageError}</span><LiveButton icon={RefreshCw} onClick={refresh}>Retry</LiveButton></div>}
     {!['Settings', 'Reports'].includes(page) && <div className={'live-metrics' + (page === 'Customers' ? ' live-metrics-customers' : '')}>
       <div className="live-metric-card"><span className="live-metric-icon"><Icon size={18}/></span><div><small>{page === 'Transactions' ? 'Matching transactions' : page === 'Purchases' ? 'Purchase orders' : page === 'Inventory' ? 'Active SKUs' : 'Records'}</small><strong>{loading ? '—' : statA}</strong></div></div>
-      <div className="live-metric-card"><span className="live-metric-icon metric-icon-amber"><AlertTriangle size={18}/></span><div><small>{statBLabel}</small><strong>{loading ? '—' : ['Customers', 'Returns & Refunds'].includes(page) ? cash(statB) : statB}</strong></div></div>
+      <div className="live-metric-card"><span className="live-metric-icon metric-icon-amber"><AlertTriangle size={18}/></span><div><small>{statBLabel}</small><strong>{loading ? '—' : ['Customers', 'Returns & Refunds', 'Spendings'].includes(page) ? cash(statB) : statB}</strong></div></div>
       {page === 'Customers' && <div className="live-metric-card"><span className="live-metric-icon metric-icon-blue"><Store size={18}/></span><div><small>Business sales</small><strong>{loading ? '—' : cash(customerSummary?.businessSales || 0)}</strong></div></div>}
       <div className="live-metric-card"><span className="live-metric-icon metric-icon-green"><CircleCheck size={18}/></span><div><small>Data source</small><strong className="live-source-label">MySQL via API</strong></div></div>
     </div>}
