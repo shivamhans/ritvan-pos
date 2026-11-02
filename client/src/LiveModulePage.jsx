@@ -853,7 +853,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     const csv = [headers.join(','), ...rows.map(row => headers.map(key => {
       const value = row[key] ?? '';
       return '"' + String(value).replace(/"/g, '""') + '"';
-    }).join(','))].join('\\r\\n');
+    }).join(','))].join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     const anchor = document.createElement('a');
     anchor.href = url;
