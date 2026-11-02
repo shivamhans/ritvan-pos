@@ -5,12 +5,13 @@ import { requireModuleAccessFor } from '../middleware/permissions.js';
 
 const router = Router();
 const PAYMENT_MODES = ['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'OTHER'];
-const isoDate = value => /^\\d{4}-\\d{2}-\\d{2}$/.test(String(value || '')) && !Number.isNaN(Date.parse(String(value) + 'T00:00:00Z'));
+const isoDate = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) && !Number.isNaN(Date.parse(String(value) + 'T00:00:00Z'));
 const money2 = value => Number(Number(value || 0).toFixed(2));
 const validId = value => Number.isSafeInteger(Number(value)) && Number(value) > 0;
+const dateOnly = value => value instanceof Date ? value.toISOString().slice(0, 10) : String(value || '').slice(0, 10);
 const normalize = row => ({
   id: Number(row.id),
-  spendingDate: String(row.spendingDate).slice(0, 10),
+  spendingDate: dateOnly(row.spendingDate),
   category: row.category,
   description: row.description,
   amount: money2(row.amount),
