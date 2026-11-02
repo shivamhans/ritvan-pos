@@ -29,8 +29,8 @@ function EmptyState({ icon: Icon = Package, title, text, action }) {
 
 
 const PERMISSION_MODULES_BY_ROLE = {
-  Admin: ['Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories', 'Purchases', 'Suppliers', 'Customers', 'Staff & Roles', 'Reports', 'Returns & Refunds', 'Settings'],
-  Manager: ['Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories', 'Purchases', 'Suppliers', 'Customers', 'Reports', 'Returns & Refunds'],
+  Admin: ['Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories', 'Purchases', 'Suppliers', 'Customers', 'Staff & Roles', 'Employees', 'Spendings', 'Reports', 'Returns & Refunds', 'Settings'],
+  Manager: ['Dashboard', 'Point of Sale', 'Transactions', 'Inventory', 'Items', 'Categories', 'Purchases', 'Suppliers', 'Customers', 'Spendings', 'Reports', 'Returns & Refunds'],
   Cashier: ['Dashboard', 'Point of Sale', 'Transactions'],
 };
 const PERMISSION_COLUMN_OPTIONS = {
