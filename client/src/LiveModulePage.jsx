@@ -1003,7 +1003,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
       {movements.length ? <div className="table-wrap"><table><thead><tr>{columnVisible('Inventory','date') && <th>DATE</th>}{columnVisible('Inventory','item') && <th>ITEM</th>}{columnVisible('Inventory','movement') && <th>MOVEMENT</th>}{columnVisible('Inventory','quantity') && <th>QUANTITY</th>}{columnVisible('Inventory','costAtTime') && <th>COST AT TIME</th>}{columnVisible('Inventory','reason') && <th>REASON</th>}{columnVisible('Inventory','user') && <th>USER</th>}</tr></thead><tbody>{movements.map(row=><tr key={row.id}>{columnVisible('Inventory','date') && <td>{asDate(row.createdAt)}</td>}{columnVisible('Inventory','item') && <td><b>{row.itemName}</b><small className="live-cell-sub">{row.sku}</small></td>}{columnVisible('Inventory','movement') && <td>{prettyStatus(row.movementType)}</td>}{columnVisible('Inventory','quantity') && <td className={Number(row.quantityDelta ?? row.qtyDelta) < 0 ? 'live-negative' : 'live-positive'}>{Number(row.quantityDelta ?? row.qtyDelta) > 0 ? '+' : ''}{row.quantityDelta ?? row.qtyDelta}</td>}{columnVisible('Inventory','costAtTime') && <td>{cash(row.unitCostAtTime)}</td>}{columnVisible('Inventory','reason') && <td>{row.reason || '—'}</td>}{columnVisible('Inventory','user') && <td>{row.userName || row.user || '—'}</td>}</tr>)}</tbody></table></div> : <BlankState title="No stock movements yet" text="Opening stock, receiving, sales and adjustments will be listed here."/>}
     </section>}
 
-    {!['Inventory', 'Settings', 'Reports', 'Returns & Refunds', 'Staff & Roles'].includes(page) && <section className="panel live-section">
+    {!['Inventory', 'Settings', 'Reports', 'Returns & Refunds', 'Staff & Roles', 'Spendings'].includes(page) && <section className="panel live-section">
       <div className="panel-head"><div><h2>{page === 'Transactions' ? 'Sales history' : page + ' directory'}</h2><p>{page === 'Purchases' ? 'Purchase orders do not affect stock until received.' : page === 'Items' ? 'Live prices, cost snapshots and stock levels from the database.' : page === 'Transactions' ? 'Open a receipt to review saved line items and payments.' : 'Changes are validated and saved by the API.'}</p></div><div className="toolbar-controls"><div className="search-box compact"><Search size={16}/><input placeholder={'Search ' + page.toLowerCase() + '…'} value={query} onChange={e=>setQuery(e.target.value)}/><button className="icon-button small" onClick={refresh} title="Refresh"><RefreshCw size={14}/></button></div></div></div>
       {loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Loading live records…</span></div>
       : currentRows.length === 0 ? <BlankState title={'No ' + page.toLowerCase() + ' found'} text={query ? 'Try another search term.' : 'Create your first record to start using this workflow.'} onAdd={showCreate ? openCreate : undefined} addLabel={addLabel}/>
@@ -1024,6 +1024,40 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
       </tbody></table></div>}
       <div className="table-footer"><span>{loading ? 'Fetching from database…' : 'Showing ' + currentRows.length + ' live record' + (currentRows.length === 1 ? '' : 's')}</span><span className="muted">API connected · {role}</span></div>
     </section>}
+
+    {(modal === 'spending-create' || modal === 'spending-edit') && <LiveModal
+      title={modal === 'spending-edit' ? 'Edit spending' : 'Record a spending'}
+      subtitle="Save an operating expense with enough detail to trace it later. This does not change inventory or employee payroll."
+      onClose={()=>setModal('')}
+      onSubmit={submitSpending}
+      busy={busy}
+      submitLabel={modal === 'spending-edit' ? 'Save changes' : 'Record spending'}
+      wide
+    >
+      <div className="live-form-grid spending-form-grid">
+        <Field label="Date *"><input className="form-input" type="date" required value={form.spendingDate || ''} onChange={event=>setValue('spendingDate',event.target.value)}/></Field>
+        <Field label="Category *"><input className="form-input" list="spending-category-options" required maxLength={100} value={form.category || ''} onChange={event=>setValue('category',event.target.value)} placeholder="e.g. Rent, Utilities, Transport"/><datalist id="spending-category-options"><option value="Rent"/><option value="Utilities"/><option value="Transport"/><option value="Repairs & maintenance"/><option value="Packaging"/><option value="Office supplies"/><option value="Marketing"/><option value="Bank charges"/><option value="Other"/></datalist></Field>
+        <Field label="Reason / description *"><input className="form-input" required minLength={3} maxLength={255} value={form.description || ''} onChange={event=>setValue('description',event.target.value)} placeholder="What was the money spent on?"/></Field>
+        <Field label="Amount *"><input className="form-input" type="number" required min="0.01" step="0.01" max="9999999999999.99" value={form.amount || ''} onChange={event=>setValue('amount',event.target.value)} placeholder="0.00"/></Field>
+        <Field label="Payment mode *"><select className="form-input" required value={form.paymentMode || 'CASH'} onChange={event=>setValue('paymentMode',event.target.value)}><option value="CASH">Cash</option><option value="UPI">UPI</option><option value="CARD">Card</option><option value="BANK_TRANSFER">Bank transfer</option><option value="OTHER">Other</option></select></Field>
+        <Field label="Paid to (optional)"><input className="form-input" maxLength={140} value={form.paidTo || ''} onChange={event=>setValue('paidTo',event.target.value)} placeholder="Person, vendor or company"/></Field>
+        <Field label="Reference number (optional)"><input className="form-input" maxLength={120} value={form.referenceNo || ''} onChange={event=>setValue('referenceNo',event.target.value)} placeholder="UPI / bank transaction ID"/></Field>
+        <Field label="Additional notes (optional)"><textarea className="form-input textarea" maxLength={500} value={form.notes || ''} onChange={event=>setValue('notes',event.target.value)} placeholder="Anything else worth keeping on record"/></Field>
+      </div>
+      <div className="info-callout"><CircleHelp size={16}/><span>Operating spendings are reported separately from employee salary and employee expense deductions to avoid double-counting. Editing is audited; voiding keeps the original record.</span></div>
+    </LiveModal>}
+
+    {modal === 'spending-void' && <LiveModal
+      title="Void spending record"
+      subtitle={'This will exclude "' + (form.description || 'this record') + '" from spending totals. The original record will remain in the ledger and audit log.'}
+      onClose={()=>setModal('')}
+      onSubmit={submitVoidSpending}
+      busy={busy}
+      submitLabel="Void spending"
+    >
+      <Field label="Reason for voiding *"><textarea className="form-input textarea" required minLength={5} maxLength={500} value={form.voidReason || ''} onChange={event=>setValue('voidReason',event.target.value)} placeholder="Explain why this record is being voided"/></Field>
+      <div className="warning-callout"><AlertTriangle size={16}/><span>This action cannot be reversed from the UI. Create a corrected spending entry if needed; do not delete the original record.</span></div>
+    </LiveModal>}
 
     {modal === 'return-create' && <LiveModal title="Start a return" subtitle="Find the original saved sale, select returned quantities, then record the manual refund settlement." onClose={()=>{setModal('');setReturnSale(null);setReturnLines([]);}} onSubmit={submitReturn} busy={busy} submitLabel="Complete return" wide>
       <div className="live-return-lookup"><Field label="Original receipt number or sale ID"><input className="form-input" value={form.receiptNo || ''} onChange={e=>setValue('receiptNo',e.target.value)} placeholder="Full receipt, sale ID, or last 4 characters (e.g. D275)"/><small>Enter the full receipt/sale ID or its last four characters (letters or digits, e.g. D275). If more than one sale matches, Ritvan will ask for the full ID.</small></Field><LiveButton icon={Search} onClick={loadReturnSale} disabled={busy}>Find sale</LiveButton></div>
