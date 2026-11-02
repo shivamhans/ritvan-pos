@@ -333,6 +333,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     const today = new Date();
     const iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
     setForm(page === 'Items' ? { name: '', sku: '', categoryId: '', sellingPrice: '', initialCost: '', initialQty: '0', reorderThreshold: '5', barcode: '', imageData: '' }
+      : page === 'Spendings' ? { spendingDate: iso, category: 'Utilities', description: '', amount: '', paymentMode: 'CASH', paidTo: '', referenceNo: '', notes: '' }
       : page === 'Staff & Roles' ? { name: '', email: '', role: 'Cashier', password: '' }
       : page === 'Categories' ? { name: '', description: '' }
       : page === 'Suppliers' ? { name: '', contactName: '', email: '', phone: '', address: '', notes: '' }
