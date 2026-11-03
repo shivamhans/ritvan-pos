@@ -54,13 +54,13 @@ The current database name is `ritvan_pos`. If your existing data is still in the
 4. Run the edited copy in MySQL Workbench. It should create/populate `ritvan_pos` with your existing tables and records. If your export did not contain a `CREATE DATABASE` statement, first run `CREATE DATABASE ritvan_pos CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;` and then import the edited copy.
 5. Compare key table row counts (for example `items`, `sales`, `sale_items`, `payments`, `customers`, `employees`) between the old and new schemas. Keep `nexora_pos_cg` unchanged until the app has been verified against `ritvan_pos`.
 
-Then set `DB_NAME=ritvan_pos` in your local `server/.env` (the local file is not overwritten by Git), restart the API, and verify `http://localhost:4001/api/health` reports `"database":"connected"`. Once the new schema is working, run the Phase 9 branding migration below to update only the untouched default business name; a custom name such as your store's name is preserved.
+Then set `DB_NAME=ritvan_pos` in your local `server/.env` (the local file is not overwritten by Git). Before restarting the API, apply the consolidated installer below to the database you intend to use, then verify `http://localhost:4001/api/health` reports `"database":"connected"`. The installer updates the branding only when the business name is still the untouched default; a custom name such as your store's name is preserved.
 
-For a brand-new installation, skip the data-copy steps and run `database/schema.sql` as shown below.
+For a brand-new installation, skip the data-copy steps, create and select `ritvan_pos`, and use the consolidated installer below. Do not run `schema.sql` separately for this setup.
 
 ### 1. Run the single consolidated database script
 
-Use **`database/ritvan-pos-all-in-one.sql`** for both new installations and upgrades. It combines the current schema with the Phase 4–10 changes, including the optional phone field for user profiles, so you no longer need to run each migration file separately.
+Use **`database/ritvan-pos-all-in-one.sql`** for both new installations and upgrades. It combines the current schema with the Phase 4–11 changes, including the optional phone field for user profiles and the operating spendings ledger, so you no longer need to run each migration file separately.
 
 **Back up first, even when the data is valuable and the upgrade is expected to be safe.**
 
@@ -81,7 +81,7 @@ For a **brand-new installation**, create and select `ritvan_pos` first, then exe
 mysql -u root -p ritvan_pos < database/ritvan-pos-all-in-one.sql
 ```
 
-The older `schema.sql` and `phase4`–`phase9` files remain in the repository for reference/backward compatibility. For a new setup or current upgrade, use the consolidated file rather than running them one by one.
+The standalone `schema.sql` and earlier phase migration files remain in the repository for reference/backward compatibility. For a new setup or current upgrade, use the consolidated file rather than running them one by one.
 
 To save an Aadhaar number, add a private 32-byte encryption key to `server/.env`. Generate it in PowerShell from the `server` folder with:
 
