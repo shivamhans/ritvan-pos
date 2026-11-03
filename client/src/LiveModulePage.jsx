@@ -799,7 +799,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   if (page === 'Reports') { title = 'Reports & analytics'; subtitle = 'Sales, returns, inventory valuation, item performance, operating spendings, and cost-aware gross profit.'; eyebrow = 'LIVE BUSINESS INSIGHTS'; Icon = Wallet; }
   if (page === 'Spendings') { title = 'Spendings'; subtitle = 'Record and analyse day-to-day operating expenses for your store.'; eyebrow = 'CASH FLOW / OPERATING COSTS'; Icon = Wallet; addLabel = 'Add spending'; }
   const filteredItems = filtered || items;
-  const statA = page === 'Spendings' ? spendings.length : page === 'Items' || page === 'Inventory' ? filteredItems.length
+  const statA = page === 'Spendings' ? Number(spendingSummary?.spendingCount || 0) : page === 'Items' || page === 'Inventory' ? filteredItems.length
     : page === 'Staff & Roles' ? currentRows.length
     : page === 'Returns & Refunds' ? currentRows.length
     : page === 'Categories' ? currentRows.length
@@ -835,7 +835,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     const csv = [headers.join(','), ...rows.map(row => headers.map(key => {
       const value = row[key] ?? '';
       return '"' + String(value).replace(/"/g, '""') + '"';
-    }).join(','))].join('\\r\\n');
+    }).join(','))].join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -886,7 +886,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
     <div className="section-title"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{subtitle}</p></div><div className="title-actions">{moduleActions}</div></div>
     {pageError && <div className="live-error"><AlertTriangle size={17}/><span>{pageError}</span><LiveButton icon={RefreshCw} onClick={refresh}>Retry</LiveButton></div>}
     {!['Settings', 'Reports'].includes(page) && <div className={'live-metrics' + (page === 'Customers' ? ' live-metrics-customers' : '')}>
-      <div className="live-metric-card"><span className="live-metric-icon"><Icon size={18}/></span><div><small>{page === 'Transactions' ? 'Matching transactions' : page === 'Purchases' ? 'Purchase orders' : page === 'Inventory' ? 'Active SKUs' : 'Records'}</small><strong>{loading ? '—' : statA}</strong></div></div>
+      <div className="live-metric-card"><span className="live-metric-icon"><Icon size={18}/></span><div><small>{page === 'Transactions' ? 'Matching transactions' : page === 'Purchases' ? 'Purchase orders' : page === 'Inventory' ? 'Active SKUs' : page === 'Spendings' ? 'Recorded entries' : 'Records'}</small><strong>{loading ? '—' : statA}</strong></div></div>
       <div className="live-metric-card"><span className="live-metric-icon metric-icon-amber"><AlertTriangle size={18}/></span><div><small>{statBLabel}</small><strong>{loading ? '—' : ['Customers', 'Returns & Refunds', 'Spendings'].includes(page) ? cash(statB) : statB}</strong></div></div>
       {page === 'Customers' && <div className="live-metric-card"><span className="live-metric-icon metric-icon-blue"><Store size={18}/></span><div><small>Business sales</small><strong>{loading ? '—' : cash(customerSummary?.businessSales || 0)}</strong></div></div>}
       <div className="live-metric-card"><span className="live-metric-icon metric-icon-green"><CircleCheck size={18}/></span><div><small>Data source</small><strong className="live-source-label">MySQL via API</strong></div></div>
@@ -1028,7 +1028,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
             <div className="live-report-mini"><small>Open reconciliations</small><b>{reportData.summary.openReconciliations}</b></div>
           </div>
           <section className="panel live-section product-analysis-section">
-            <div className="panel-head"><div><h2>Product sales analysis</h2><p>Item-level performance for sales completed in this period. Discounts are allocated proportionally across sale lines; refunds use the original returned line records.</p></div><TrendingUp size={18} color="var(--violet)"/></div>
+            <div className="panel-head"><div><h2>Product sales analysis</h2><p>Sales and refunds processed in the selected period. Refunds are attributed to their original item lines, even when the original sale predates this range.</p></div><TrendingUp size={18} color="var(--violet)"/></div>
             <div className="product-analysis-summary">
               <div><small>Units sold</small><b>{Number(reportData.productSalesSummary?.unitsSold || 0).toLocaleString('en-IN')}</b></div>
               <div><small>Units returned</small><b>{Number(reportData.productSalesSummary?.unitsReturned || 0).toLocaleString('en-IN')}</b></div>
