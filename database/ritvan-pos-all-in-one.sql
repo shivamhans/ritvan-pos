@@ -18,6 +18,7 @@
 -- payments.sale_id (if present) to allow split tenders; it does not delete payment rows.
 -- The Phase 9 branding step changes only the untouched default "Nexora Store" name.
 -- Phase 10 adds an optional users.phone column for My Profile; existing rows get NULL.
+-- Phase 11 creates the operating spendings ledger; all existing business records are retained.
 --
 -- After running, verify SELECT DATABASE(); and row counts for items, sales, payments,
 -- customers, employees. Check the output status messages and fix any reported SQL error.
