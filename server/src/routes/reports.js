@@ -188,7 +188,7 @@ router.get('/summary', async (req, res, next) => {
     const cogs = money2(Number(cost.soldCost) - Number(restockRows[0].restockedCost));
     const grossProfit = provisionalQuantity > 0 ? null : money2(netRevenue - cogs);
     const productMap = new Map();
-    const productKey = row => [Number(row.itemId), String(row.name || ''), String(row.sku || '')].join('\\u0000');
+    const productKey = row => JSON.stringify([Number(row.itemId), String(row.name || ''), String(row.sku || '')]);
     const getProduct = row => {
       const key = productKey(row);
       if (!productMap.has(key)) productMap.set(key, {
