@@ -4,6 +4,7 @@ import { pool } from './db.js';
 
 const [name, email, password] = process.argv.slice(2);
 if (!name || !email || !password || password.length < 12) {
+  console.error('Admin account was NOT created. Passwords must be at least 12 characters.');
   console.error('Usage: node src/seed-admin.js "Admin Name" admin@example.com "A-strong-password-12+"');
   process.exit(1);
 }
