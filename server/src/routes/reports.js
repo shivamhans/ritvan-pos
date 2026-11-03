@@ -82,32 +82,32 @@ router.get('/summary', async (req, res, next) => {
       GROUP BY si.item_id, si.item_name_snapshot, si.sku_snapshot
       ORDER BY unitsSold DESC, salesAmount DESC LIMIT 5
     `, [from, to]);
+    // Sales are grouped by the sale completion date; refunds are grouped by the
+    // refund completion date. Keep those flows separate so a refund this month
+    // for a sale last month still appears in this month's item-level refund totals.
     const [productSalesRows] = await pool.execute(`
       SELECT si.item_id AS itemId, si.item_name_snapshot AS name, si.sku_snapshot AS sku,
         SUM(si.quantity) AS unitsSold,
-        SUM(COALESCE(returned.returnedQuantity, 0)) AS unitsReturned,
         ROUND(SUM(si.quantity * si.unit_price_actual), 2) AS grossSales,
         ROUND(SUM(COALESCE(si.discount_amount, 0) + CASE WHEN s.subtotal > 0
-          THEN s.discount_total * (si.quantity * si.unit_price_actual) / s.subtotal ELSE 0 END), 2) AS discountAmount,
-        ROUND(SUM(COALESCE(returned.refundedAmount, 0)), 2) AS refundAmount,
-        ROUND(SUM(si.quantity * si.unit_price_actual)
-          - SUM(COALESCE(si.discount_amount, 0) + CASE WHEN s.subtotal > 0
-            THEN s.discount_total * (si.quantity * si.unit_price_actual) / s.subtotal ELSE 0 END)
-          - SUM(COALESCE(returned.refundedAmount, 0)), 2) AS netSales
+          THEN s.discount_total * (si.quantity * si.unit_price_actual) / s.subtotal ELSE 0 END), 2) AS discountAmount
       FROM sale_items si
       JOIN sales s ON s.id = si.sale_id
-      LEFT JOIN (
-        SELECT ri.sale_item_id, SUM(ri.quantity) AS returnedQuantity,
-          SUM(ri.refund_amount) AS refundedAmount
-        FROM return_items ri JOIN returns r ON r.id = ri.return_id
-        WHERE r.status = 'COMPLETED' AND DATE(r.completed_at) BETWEEN ? AND ?
-        GROUP BY ri.sale_item_id
-      ) returned ON returned.sale_item_id = si.id
       WHERE s.status = 'COMPLETED' AND DATE(s.completed_at) BETWEEN ? AND ?
       GROUP BY si.item_id, si.item_name_snapshot, si.sku_snapshot
-      ORDER BY netSales DESC, unitsSold DESC
-      LIMIT 250
-    `, [from, to, from, to]);
+    `, [from, to]);
+    const [productReturnRows] = await pool.execute(`
+      SELECT si.item_id AS itemId, si.item_name_snapshot AS name, si.sku_snapshot AS sku,
+        SUM(ri.quantity) AS unitsReturned,
+        ROUND(SUM(ri.refund_amount), 2) AS refundAmount
+      FROM return_items ri
+      JOIN returns r ON r.id = ri.return_id
+      JOIN sale_items si ON si.id = ri.sale_item_id
+      JOIN sales s ON s.id = si.sale_id
+      WHERE r.status = 'COMPLETED' AND s.status = 'COMPLETED'
+        AND DATE(r.completed_at) BETWEEN ? AND ?
+      GROUP BY si.item_id, si.item_name_snapshot, si.sku_snapshot
+    `, [from, to]);
     const [khataRows] = await pool.execute(`
       SELECT COALESCE(SUM(balance), 0) AS outstandingTotal, COUNT(*) AS customersOwing
       FROM (
@@ -187,16 +187,31 @@ router.get('/summary', async (req, res, next) => {
     const provisionalQuantity = Number(cost.provisionalQuantity || 0) + Number(restockRows[0].provisionalReturnQuantity || 0);
     const cogs = money2(Number(cost.soldCost) - Number(restockRows[0].restockedCost));
     const grossProfit = provisionalQuantity > 0 ? null : money2(netRevenue - cogs);
-    const productSales = productSalesRows.map(row => ({
+    const productMap = new Map();
+    const productKey = row => [Number(row.itemId), String(row.name || ''), String(row.sku || '')].join('\\u0000');
+    const getProduct = row => {
+      const key = productKey(row);
+      if (!productMap.has(key)) productMap.set(key, {
+        itemId: Number(row.itemId), name: row.name, sku: row.sku,
+        unitsSold: 0, unitsReturned: 0, grossSales: 0, discountAmount: 0, refundAmount: 0, netSales: 0,
+      });
+      return productMap.get(key);
+    };
+    for (const row of productSalesRows) {
+      const product = getProduct(row);
+      product.unitsSold = Number(row.unitsSold || 0);
+      product.grossSales = money2(row.grossSales);
+      product.discountAmount = money2(row.discountAmount);
+    }
+    for (const row of productReturnRows) {
+      const product = getProduct(row);
+      product.unitsReturned = Number(row.unitsReturned || 0);
+      product.refundAmount = money2(row.refundAmount);
+    }
+    const productSales = [...productMap.values()].map(row => ({
       ...row,
-      itemId: Number(row.itemId),
-      unitsSold: Number(row.unitsSold || 0),
-      unitsReturned: Number(row.unitsReturned || 0),
-      grossSales: money2(row.grossSales),
-      discountAmount: money2(row.discountAmount),
-      refundAmount: money2(row.refundAmount),
-      netSales: money2(row.netSales),
-    }));
+      netSales: money2(row.grossSales - row.discountAmount - row.refundAmount),
+    })).sort((a, b) => b.netSales - a.netSales || b.unitsSold - a.unitsSold || a.name.localeCompare(b.name));
     const productSalesSummary = productSales.reduce((totals, row) => ({
       unitsSold: totals.unitsSold + row.unitsSold,
       unitsReturned: totals.unitsReturned + row.unitsReturned,
