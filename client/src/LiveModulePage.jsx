@@ -830,7 +830,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
 
   const exportProductAnalysisCsv = () => {
     if (!reportData) return;
-    const rows = reportData.productSales || [];
+    const rows = productAnalysisRows;
     const headers = ['itemId','name','sku','unitsSold','unitsReturned','grossSales','discountAmount','refundAmount','netSales'];
     const csv = [headers.join(','), ...rows.map(row => headers.map(key => {
       const value = row[key] ?? '';
@@ -847,7 +847,7 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   const exportSpendingsCsv = () => {
     const normalizedQuery = spendingQuery.trim().toLowerCase();
     const rows = spendings.filter(row => !normalizedQuery || [
-      row.description, row.category, row.paidTo, row.referenceNo, row.paymentMode, row.status,
+      row.description, row.category, row.paidTo, row.referenceNo, row.paymentMode, row.status, row.notes,
     ].some(value => String(value || '').toLowerCase().includes(normalizedQuery)));
     const headers = ['id','spendingDate','category','description','amount','paymentMode','paidTo','referenceNo','notes','status','voidReason'];
     const csv = [headers.join(','), ...rows.map(row => headers.map(key => {
@@ -930,8 +930,8 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
         <div className="panel-head"><div><h2>Spending ledger</h2><p>Search, review and correct operating expense entries. Voiding keeps the original record for audit.</p></div><div className="toolbar-controls"><div className="search-box compact"><Search size={16}/><input placeholder="Search reason, category, payee…" value={spendingQuery} onChange={event=>setSpendingQuery(event.target.value)}/><button className="icon-button small" onClick={()=>setSpendingQuery('')} title="Clear search"><X size={14}/></button></div></div></div>
         {pageError && <div className="live-error"><AlertTriangle size={16}/><span>{pageError}</span><LiveButton icon={RefreshCw} onClick={refresh}>Retry</LiveButton></div>}
         {loading ? <div className="live-loading"><span className="login-status-pulse"/><span>Loading spending ledger…</span></div>
-        : spendings.filter(row=>[row.description,row.category,row.paidTo,row.referenceNo,row.paymentMode,row.status].some(value=>String(value||'').toLowerCase().includes(spendingQuery.trim().toLowerCase()))).length ? <div className="table-wrap"><table className="spending-table"><thead><tr><th>DATE</th><th>REASON / PAYEE</th><th>CATEGORY</th><th>PAYMENT</th><th>AMOUNT</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
-          {spendings.filter(row=>[row.description,row.category,row.paidTo,row.referenceNo,row.paymentMode,row.status].some(value=>String(value||'').toLowerCase().includes(spendingQuery.trim().toLowerCase()))).map(row=><tr key={row.id}>
+        : spendings.filter(row=>[row.description,row.category,row.paidTo,row.referenceNo,row.paymentMode,row.status,row.notes].some(value=>String(value||'').toLowerCase().includes(spendingQuery.trim().toLowerCase()))).length ? <div className="table-wrap"><table className="spending-table"><thead><tr><th>DATE</th><th>REASON / PAYEE</th><th>CATEGORY</th><th>PAYMENT</th><th>AMOUNT</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
+          {spendings.filter(row=>[row.description,row.category,row.paidTo,row.referenceNo,row.paymentMode,row.status,row.notes].some(value=>String(value||'').toLowerCase().includes(spendingQuery.trim().toLowerCase()))).map(row=><tr key={row.id}>
             <td><b>{asDate(row.spendingDate)}</b><small className="live-cell-sub">#{row.id}</small></td>
             <td><b>{row.description}</b><small className="live-cell-sub">{row.paidTo ? 'Paid to '+row.paidTo : row.notes || row.referenceNo || 'No extra details'}</small></td>
             <td><span className="spending-category-chip">{row.category}</span></td>
