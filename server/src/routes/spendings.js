@@ -60,6 +60,7 @@ function validatePayload(body = {}) {
   if (!category || category.length > 100) return { error: 'Category is required and must be 100 characters or fewer.' };
   if (description.length < 3 || description.length > 255) return { error: 'Enter a reason of 3–255 characters.' };
   if (!Number.isFinite(amount) || amount <= 0 || amount > 9999999999999.99) return { error: 'Enter a valid amount greater than zero.' };
+  if (Math.abs(amount * 100 - Math.round(amount * 100)) > 0.000001) return { error: 'Spending amounts can have no more than two decimal places.' };
   if (!PAYMENT_MODES.includes(paymentMode)) return { error: 'Choose a valid payment mode.' };
   if (paidTo.length > 140 || referenceNo.length > 120 || notes.length > 500) return { error: 'One or more optional fields exceed their allowed length.' };
   return { values: { spendingDate, category, description, amount: money2(amount), paymentMode, paidTo: paidTo || null, referenceNo: referenceNo || null, notes: notes || null } };
