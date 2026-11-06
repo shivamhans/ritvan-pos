@@ -106,7 +106,7 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
         setReportData(null);
         const detail = error.message || 'Could not load dashboard metrics.';
         setReportError(detail.includes("doesn't exist") || detail.includes('does not exist')
-          ? detail + '. Apply database/phase4-migration.sql in MySQL Workbench, then retry.'
+          ? detail + '. Back up the database, apply database/overwrite.sql, then retry.'
           : detail);
       })
       .finally(() => { if (!cancelled) setReportLoading(false); });
