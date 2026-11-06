@@ -2,9 +2,9 @@ name: Ritvan POS checks
 
 on:
   push:
-    branches: ["main", "phase-2-api-integration"]
+    branches: ["main", "phase-2-api-integration", "fix/gross-profit-and-safe-installers"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "phase-2-api-integration"]
 
 jobs:
   frontend:

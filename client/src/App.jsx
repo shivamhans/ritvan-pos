@@ -106,7 +106,7 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
         setReportData(null);
         const detail = error.message || 'Could not load dashboard metrics.';
         setReportError(detail.includes("doesn't exist") || detail.includes('does not exist')
-          ? detail + '. Apply database/phase4-migration.sql in MySQL Workbench, then retry.'
+          ? detail + '. Back up the database, apply database/overwrite.sql, then retry.'
           : detail);
       })
       .finally(() => { if (!cancelled) setReportLoading(false); });
@@ -174,7 +174,7 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
     <div className="stats-grid dashboard-stats-grid">
       <StatCard icon={Wallet} label={isLive ? 'Net revenue' : 'Total revenue'} value={loading ? '—' : hasData ? formatAmount(revenue) : '—'} change={demo ? '12.8%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">Sales less recorded refunds</span>}/>
       <StatCard icon={ShoppingBag} label="Completed sales" value={loading ? '—' : hasData ? String(orders ?? 0) : '—'} change={demo ? '8.2%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">Voided sales excluded</span>} accent="blue"/>
-      <StatCard icon={TrendingUp} label="Gross profit" value={loading ? '—' : !hasData ? '—' : demo ? formatAmount(grossProfit) : summary?.grossProfitAvailable ? formatAmount(grossProfit) : 'Unavailable'} change={demo ? '6.4%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">{summary?.grossProfitAvailable ? 'Based on saved cost snapshots' : 'Provisional costs prevent a reliable figure'}</span>} accent="green"/>
+      <StatCard icon={TrendingUp} label={isLive && Number(summary?.provisionalCostQuantity || 0) > 0 ? 'Gross profit*' : 'Gross profit'} value={loading ? '—' : !hasData ? '—' : demo ? formatAmount(grossProfit) : formatAmount(grossProfit)} change={demo ? '6.4%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">{Number(summary?.provisionalCostQuantity || 0) > 0 ? 'Known-cost figure; excludes ' + Number(summary.provisionalCostQuantity).toLocaleString('en-IN') + ' unverified units' : 'Based on saved cost snapshots'}</span>} accent="green"/>
       <StatCard icon={Package} label="Inventory cost value" value={loading ? '—' : hasData ? formatAmount(inventoryValue) : '—'} change={demo ? '2.1%' : undefined} trend="down" note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">Quantity on hand × average cost</span>} accent="amber"/>
       {canViewSpendings && <StatCard icon={Wallet} label="Operating spendings" value={loading ? '—' : demo ? '—' : !reportData?.spendingTrackingAvailable ? 'Setup required' : formatAmount(summary?.operatingSpendings || 0)} note={demo ? <span className="muted">Sign in to view saved spendings</span> : !reportData?.spendingTrackingAvailable ? <span className="muted">Run the updated database installer</span> : <span className="muted">{Number(summary?.operatingSpendingCount || 0)} recorded entries in this period</span>} accent="amber"/>}
     </div>
