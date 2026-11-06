@@ -33,12 +33,14 @@ router.get('/summary', async (req, res, next) => {
     `, [from, to]);
     const [costRows] = await pool.execute(`
       SELECT COALESCE(SUM(si.quantity * si.unit_cost_snapshot),0) AS soldCost,
+        COALESCE(SUM(CASE WHEN si.provisional_cost = 0 THEN si.quantity * si.unit_cost_snapshot ELSE 0 END),0) AS knownSoldCost,
         COALESCE(SUM(CASE WHEN si.provisional_cost = 1 THEN si.quantity ELSE 0 END),0) AS provisionalQuantity
       FROM sale_items si JOIN sales s ON s.id = si.sale_id
       WHERE s.status = 'COMPLETED' AND DATE(s.completed_at) BETWEEN ? AND ?
     `, [from, to]);
     const [restockRows] = await pool.execute(`
       SELECT COALESCE(SUM(CASE WHEN ri.restock = 1 THEN ri.quantity * si.unit_cost_snapshot ELSE 0 END),0) AS restockedCost,
+        COALESCE(SUM(CASE WHEN ri.restock = 1 AND si.provisional_cost = 0 THEN ri.quantity * si.unit_cost_snapshot ELSE 0 END),0) AS knownRestockedCost,
         COALESCE(SUM(CASE WHEN si.provisional_cost = 1 THEN ri.quantity ELSE 0 END),0) AS provisionalReturnQuantity
       FROM return_items ri JOIN returns r ON r.id = ri.return_id
       JOIN sale_items si ON si.id = ri.sale_item_id
@@ -185,8 +187,12 @@ router.get('/summary', async (req, res, next) => {
     const sale = saleRows[0], ret = returnRows[0], cost = costRows[0], inventory = inventoryRows[0];
     const netRevenue = money2(Number(sale.salesTotal) - Number(ret.refundTotal));
     const provisionalQuantity = Number(cost.provisionalQuantity || 0) + Number(restockRows[0].provisionalReturnQuantity || 0);
-    const cogs = money2(Number(cost.soldCost) - Number(restockRows[0].restockedCost));
-    const grossProfit = provisionalQuantity > 0 ? null : money2(netRevenue - cogs);
+    // Always return a useful known-cost gross-profit figure. Provisional lines are
+    // deliberately excluded from COGS rather than silently treating an unknown
+    // historical cost as accurate. The completeness flag keeps the UI honest.
+    const knownCogs = money2(Number(cost.knownSoldCost) - Number(restockRows[0].knownRestockedCost));
+    const grossProfit = money2(netRevenue - knownCogs);
+    const grossProfitComplete = provisionalQuantity === 0;
     const productMap = new Map();
     const productKey = row => JSON.stringify([Number(row.itemId), String(row.name || ''), String(row.sku || '')]);
     const getProduct = row => {
@@ -240,8 +246,10 @@ router.get('/summary', async (req, res, next) => {
         refundsTotal: money2(ret.refundTotal),
         netRevenue,
         grossProfit,
-        grossProfitAvailable: provisionalQuantity === 0,
+        grossProfitAvailable: true,
+        grossProfitComplete,
         provisionalCostQuantity: provisionalQuantity,
+        grossProfitBasis: grossProfitComplete ? 'COMPLETE' : 'KNOWN_COSTS_ONLY',
         inventoryCostValue: money2(inventory.inventoryCostValue),
         activeItems: Number(inventory.itemCount || 0),
         lowStockCount: Number(inventory.lowStockCount || 0),
@@ -265,7 +273,7 @@ router.get('/summary', async (req, res, next) => {
       spendingSummary: spendingTrackingAvailable ? spendingSummary : null,
       recentSpendings,
       spendingTrackingAvailable,
-      notes: ['Net revenue subtracts refunds completed in the selected period.', 'Gross profit is hidden when sales or restock lines in the period include provisional cost snapshots.', 'Operating spendings are shown separately from employee expense deductions and payroll; this report does not combine all cost categories into net profit.'],
+      notes: ['Net revenue subtracts refunds completed in the selected period.', 'Gross profit uses saved cost snapshots. When provisional-cost quantities exist, the displayed figure is a known-cost subtotal and excludes those unverified quantities; it is not a complete gross-profit figure.', 'Operating spendings are shown separately from employee expense deductions and payroll; this report does not combine all cost categories into net profit.'],
     });
   } catch (error) { next(error); }
 });
