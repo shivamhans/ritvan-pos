@@ -1,8 +1,8 @@
 {
-  "name": "nexora-pos",
+  "name": "ritvan-pos",
   "private": true,
   "version": "0.1.0",
-  "description": "Nexora POS application workspace",
+  "description": "Ritvan POS application workspace",
   "scripts": {
     "dev:client": "npm --prefix client run dev",
     "build:client": "npm --prefix client run build",
