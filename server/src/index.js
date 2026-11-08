@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: process.env.RITVAN_ENV_PATH || undefined });
 import { pool } from './db.js';
 import authRoutes from './routes/auth.js';
 import itemRoutes from './routes/items.js';
@@ -45,7 +46,7 @@ function isAllowedLanOrigin(origin) {
 app.use(cors({
   origin(origin, callback) {
     const isLocalViteOrigin = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || '');
-    if (!origin || configuredOrigins.includes(origin) || isLocalViteOrigin || isAllowedLanOrigin(origin)) return callback(null, true);
+    if (!origin || (process.env.RITVAN_DESKTOP === 'true' && origin === 'null') || configuredOrigins.includes(origin) || isLocalViteOrigin || isAllowedLanOrigin(origin)) return callback(null, true);
     return callback(new Error('Origin is not allowed by CORS.'));
   },
 }));
@@ -83,4 +84,10 @@ app.use((error, _req, res, _next) => {
 });
 const port = Number(process.env.PORT || 4001);
 const host = process.env.HOST || '0.0.0.0';
-app.listen(port, host, () => console.log('Ritvan POS API listening on ' + host + ':' + port));
+const server = app.listen(port, host, () => console.log('Ritvan POS API listening on ' + host + ':' + port));
+
+export { server };
+export async function shutdown() {
+  await new Promise(resolve => server.close(resolve));
+  await pool.end();
+}
