@@ -145,7 +145,7 @@ function getLanAddresses() {
   const addresses = [];
   for (const entries of Object.values(interfaces)) {
     for (const entry of entries || []) {
-      if (entry.family === 'IPv4' && !entry.internal && /^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)/.test(entry.address)) addresses.push({ ip: entry.address, url: 'http://' + entry.address + ':' + port });
+      if ((entry.family === 'IPv4' || entry.family === 4) && !entry.internal && /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(entry.address)) addresses.push({ ip: entry.address, url: 'http://' + entry.address + ':' + port });
     }
   }
   return { port, addresses };
