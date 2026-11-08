@@ -6,6 +6,7 @@ export default function LoginScreen({ onLogin, onDemo }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [apiOnline, setApiOnline] = useState(null);
@@ -49,7 +50,7 @@ export default function LoginScreen({ onLogin, onDemo }) {
     setBusy(true);
     setError('');
     try {
-      await onLogin({ email: email.trim(), password });
+      await onLogin({ email: email.trim(), password, rememberMe });
     } catch (err) {
       setError(err.message || 'Unable to sign in. Check your details and try again.');
     } finally {
@@ -104,7 +105,8 @@ export default function LoginScreen({ onLogin, onDemo }) {
               <input id="ritvan-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} required />
               <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
             </div>
-            {error && <div className="login-error" role="alert">{error}</div>}
+            <label className="remember-me-option"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} /><span>Remember me</span><small>Keep me signed in on this device</small></label>
+            {error && <div className="login-error" role="alert">{error}</div>
             <button className="login-submit" type="submit" disabled={busy || apiOnline === false}>
               <span>{busy ? 'Signing in…' : 'Sign in to Ritvan'}</span>{!busy && <ArrowRight size={17} />}
             </button>
