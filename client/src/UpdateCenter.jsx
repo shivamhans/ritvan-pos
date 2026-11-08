@@ -18,7 +18,7 @@ export default function UpdateCenter({ activePage, hasModal, isAdmin }) {
       if (next?.supported) bridge.checkForUpdates().catch(() => {});
     }).catch(() => {});
     const report = () => bridge.reportActivity({
-      safeToUpdate: activePage !== 'Point of Sale' && !hasModal,
+      safeToUpdate: activePage === 'Dashboard' && !hasModal,
     }).catch(() => {});
     const events = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
     events.forEach(name => window.addEventListener(name, report, { passive: true }));
@@ -77,7 +77,7 @@ export default function UpdateCenter({ activePage, hasModal, isAdmin }) {
         {downloading && <div className="update-progress"><div style={{ width: `${Math.max(0, Math.min(100, state.percent || 0))}%` }}/></div>}
         {hasError && state.error && <p className="update-error">{state.error}</p>}
         <label className="update-auto-option">
-          <span><b>Automatic updates</b><small>Install after 10 minutes of inactivity outside Point of Sale, or when you quit the app. The database is backed up before schema migrations.</small></span>
+          <span><b>Automatic updates</b><small>Install after 10 minutes of inactivity on Dashboard, or when you quit the app. The database is backed up before schema migrations.</small></span>
           <input type="checkbox" checked={Boolean(state.autoInstallWhenIdle)} onChange={toggleAutomatic} disabled={busy}/>
         </label>
         <div className="update-actions">
