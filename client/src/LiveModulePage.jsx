@@ -113,6 +113,8 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   const [productQuery, setProductQuery] = useState('');
   const [productSort, setProductSort] = useState('netSales');
   const [settings, setSettings] = useState(null);
+  const [missingTables, setMissingTables] = useState([]);
+  const [repairBusy, setRepairBusy] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportTo, setReportTo] = useState(() => localDateInput(new Date()));
@@ -220,6 +222,23 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
   }, [page, query, items, categories, suppliers, customers, purchases, transactions, staff, returnsRows, spendings]);
 
   const currentRows = filtered || (page === 'Items' || page === 'Inventory' ? items : page === 'Categories' ? categories : page === 'Suppliers' ? suppliers : page === 'Customers' ? customers : page === 'Purchases' ? purchases : page === 'Staff & Roles' ? staff : page === 'Returns & Refunds' ? returnsRows : page === 'Spendings' ? spendings : transactions);
+  const scanMissingTables = async () => {
+    try { const result = await apiRequest('/database-maintenance/missing', { token }); setMissingTables(result.missing || []); }
+    catch (error) { notify(error.message || 'Could not inspect database schema.', 'warning'); }
+  };
+  const repairMissingTables = async () => {
+    if (role !== 'Admin' || repairBusy) return;
+    if (!window.confirm('Create only the missing tables listed here? Ritvan will create a full database backup first. Existing tables and records will not be changed.')) return;
+    setRepairBusy(true);
+    try {
+      const result = await apiRequest('/database-maintenance/repair-missing-tables', { method: 'POST', token, body: { confirm: true } });
+      notify(result.message || 'Database repair completed.', 'success');
+      setMissingTables([]);
+      refresh();
+    } catch (error) { notify(error.message || 'Database repair failed. No changes were confirmed.', 'warning'); }
+    finally { setRepairBusy(false); }
+  };
+
   const setValue = (key, value) => setForm(old => ({ ...old, [key]: value }));
 
   const handleItemPhoto = async event => {
@@ -1000,6 +1019,11 @@ export default function LiveModulePage({ page, auth, items, setItems, notify, on
       </form>}
     </section>}
 
+      {role === 'Admin' && <div className="panel live-section database-repair-panel">
+        <div className="panel-head"><div><h2>Database health & repair</h2><p>Inspect the configured database for missing Ritvan tables. Existing tables and records are never replaced.</p></div><StatusPill value="ADMIN ONLY"/></div>
+        <div className="settings-live-actions"><LiveButton onClick={scanMissingTables} disabled={repairBusy} icon={RefreshCw}>Scan for missing tables</LiveButton>{missingTables.length > 0 && <LiveButton onClick={repairMissingTables} variant="primary" disabled={repairBusy} icon={ShieldCheck}>{repairBusy ? 'Repairing…' : 'Back up & create missing tables'}</LiveButton>}</div>
+        {missingTables.length > 0 ? <div className="warning-callout"><AlertTriangle size={16}/><span>Missing tables ({missingTables.length}): {missingTables.join(', ')}. A database backup must succeed before repair can proceed.</span></div> : <p className="muted">Run a scan to check the current database. This tool only creates absent tables; it does not add missing columns to existing tables.</p>}
+      </div>}
     {page === 'Reports' && <section className="live-report-workspace">
       <section className="panel live-section">
         <div className="panel-head"><div><h2>Reporting period</h2><p>Figures are calculated from saved sales, return, item-cost, and payment records.</p></div><div className="toolbar-controls"><Field label="From"><input className="form-input report-date" type="date" value={reportFrom} max={reportTo} onChange={e=>setReportFrom(e.target.value)}/></Field><Field label="To"><input className="form-input report-date" type="date" value={reportTo} min={reportFrom} onChange={e=>setReportTo(e.target.value)}/></Field></div></div>
