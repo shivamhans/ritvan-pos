@@ -1,0 +1,89 @@
+name: Build and publish Ritvan POS desktop updates
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ritvan-desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            target: --win nsis
+          - platform: macos
+            os: macos-latest
+            target: --mac dmg zip
+          - platform: linux
+            os: ubuntu-latest
+            target: --linux AppImage deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install desktop build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install API dependencies
+        run: npm --prefix server install --no-audit --no-fund
+      - name: Install frontend dependencies
+        run: npm --prefix client install --no-audit --no-fund
+      - name: Set release version
+        shell: bash
+        run: |
+          node -e "const fs=require('fs'); const p=require('./package.json'); p.version=process.env.VERSION; fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\\n')"
+        env:
+          VERSION: 1.0.${{ github.run_number }}
+      - name: Build production frontend
+        run: npm --prefix client run build
+      - name: Build installer
+        run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload platform release files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ritvan-release-${{ matrix.platform }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all platform artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ritvan-release-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish versioned release for automatic updates
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Ritvan POS v1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          make_latest: true
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
