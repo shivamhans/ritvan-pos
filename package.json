@@ -96,7 +96,14 @@
         }
       ],
       "category": "Office",
-      "synopsis": "Ritvan POS point of sale"
+      "synopsis": "Ritvan POS point of sale",
+      "maintainer": "Shivam Hans <99956324+shivamhans@users.noreply.github.com>",
+      "desktopName": "ritvan-pos",
+      "syncDesktopName": true
     }
+  },
+  "author": {
+    "name": "Shivam Hans",
+    "email": "99956324+shivamhans@users.noreply.github.com"
   }
 }
