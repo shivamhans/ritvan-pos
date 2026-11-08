@@ -877,10 +877,32 @@ function GenericPage({ page, onNavigate, items, notify, setItems, currency }) {
   return <><SectionTitle eyebrow={config.eyebrow} title={config.title} subtitle={config.subtitle} action={<><Button icon={Download} onClick={()=>notify('Export is planned for a later phase.')}>Export</Button><Button variant="primary" icon={Plus} onClick={actionClick}>{config.action}</Button></>}/>{page==='Settings'?<div className="settings-layout"><div className="settings-nav panel"><button className="settings-nav-item active"><BriefcaseBusiness size={16}/> Business profile</button><button className="settings-nav-item"><CircleDollarSign size={16}/> Currency & tax</button><button className="settings-nav-item"><ReceiptText size={16}/> Receipts</button><button className="settings-nav-item"><ShieldCheck size={16}/> Security</button></div><div className="settings-content panel"><div className="panel-head"><div><h2>Business profile</h2><p>These details appear across your workspace and receipts.</p></div><Pill tone="neutral">Admin only</Pill></div><div className="settings-form"><div className="form-field"><label>Business name</label><input className="form-input" value={storeName} onChange={e=>setStoreName(e.target.value)}/></div><div className="form-field"><label>Business currency</label><select className="form-input" value={currencySetting} onChange={e=>setCurrencySetting(e.target.value)}><option value="INR">INR · Indian Rupee (₹)</option><option value="USD">USD · US Dollar ($)</option><option value="GBP">GBP · British Pound (£)</option><option value="EUR">EUR · Euro (€)</option></select><small>One currency for the business. Changing this relabels historical amounts; it does not convert them.</small></div><div className="form-field"><label>Number format locale</label><select className="form-input" value={locale} onChange={e=>setLocale(e.target.value)}><option value="en-IN">English (India)</option><option value="en-US">English (United States)</option><option value="en-GB">English (United Kingdom)</option></select></div><div className="settings-divider"/><div className="setting-toggle-row"><div><b>Enable tax</b><p>Tax is off by default. Tax calculation rules require final approval before implementation.</p></div><button className={`toggle ${taxEnabled?'on':''}`} onClick={()=>setTaxEnabled(!taxEnabled)} aria-label="Toggle tax"><span/></button></div>{taxEnabled&&<div className="info-callout"><CircleHelp size={16}/> Tax is enabled in this prototype, but tax calculation is not yet connected. Do not use for real transactions.</div>}<div className="settings-divider"/><div className="setting-toggle-row"><div><b>Negative stock override</b><p>Admin-only, with a mandatory reason and reconciliation record.</p></div><Pill tone="warning">Policy enforced in design</Pill></div><div className="settings-actions"><Button variant="primary" onClick={()=>notify('Settings updated in this demo session. No database is connected yet.','success')}>Save changes</Button></div></div></div></div>:page==='Reports'?<><div className="stats-grid"><StatCard icon={Wallet} label="Net sales revenue" value="₹24,580" change="12.8%" note="After recorded returns and discounts"/><StatCard icon={TrendingUp} label="Gross profit" value="₹8,426" change="6.4%" note="Based on weighted average cost" accent="green"/><StatCard icon={ShoppingBag} label="Completed orders" value="384" change="8.2%" note="Voided sales excluded" accent="blue"/><StatCard icon={Boxes} label="Inventory cost value" value="₹1,82,940" change="2.1%" trend="down" note="Quantity on hand × average cost" accent="amber"/></div><div className="reports-grid"><div className="panel chart-panel"><div className="panel-head"><div><h2>Sales performance</h2><p>Revenue by day · Illustrative demo data</p></div><Button icon={CalendarDays}>Last 7 days</Button></div><div className="sales-chart report-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={salesData} margin={{top:10,right:8,left:-12,bottom:0}}><CartesianGrid strokeDasharray="3 5" vertical={false} stroke="var(--line)"/><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill:'var(--muted)',fontSize:12}} dy={10}/><YAxis axisLine={false} tickLine={false} tick={{fill:'var(--muted)',fontSize:11}} tickFormatter={formatShort}/><Tooltip contentStyle={{background:'var(--popover)',border:'1px solid var(--line)',borderRadius:12,color:'var(--text)'}} formatter={v=>[formatMoney(v),'Sales']}/><Bar dataKey="sales" fill="#7968e8" radius={[6,6,0,0]} maxBarSize={38}/></BarChart></ResponsiveContainer></div></div><div className="panel report-note"><div className="stat-icon icon-violet"><Sparkles size={18}/></div><h2>Reliable numbers, no guesswork.</h2><p>Ritvan reports gross profit using each sale line's saved cost snapshot. Net profit is intentionally unavailable until expense tracking exists.</p><Pill tone="success" dot>Cost-aware reporting</Pill></div></div></>:<><div className="stats-grid"><StatCard icon={Icon} label={page==='Transactions'?'Completed sales':'Total records'} value={page==='Transactions'?'384':String(rows.length||'08')} note="Demo data for interface review" accent="violet"/><StatCard icon={TrendingUp} label="This month" value="₹24,580" change="12.8%" note="Illustrative only" accent="green"/><StatCard icon={Clock3} label="Needs attention" value={page==='Items'?'03':'02'} note="Requires review" accent="amber"/><StatCard icon={CheckCircle2} label="Active" value={page==='Staff & Roles'?'06':'98%'} note="Current workspace" accent="blue"/></div><section className="panel generic-table-panel"><div className="panel-head"><div><h2>{page} overview</h2><p>Review and manage your {page.toLowerCase()}.</p></div><div className="toolbar-controls"><div className="search-box compact"><Search size={16}/><input placeholder={`Search ${page.toLowerCase()}...`} value={query} onChange={e=>setQuery(e.target.value)}/></div><Button icon={Filter} onClick={()=>notify('Additional filters will be available in the next phase.')}>Filter</Button></div></div>{config.columns.length&&rows.length?<div className="table-wrap"><table><thead><tr>{config.columns.map(c=><th key={c}>{c}</th>)}<th></th></tr></thead><tbody>{rows.map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j}>{cell}</td>)}<td><button className="icon-button small" onClick={()=>notify('Record details will be connected to the backend in a later phase.')}><Ellipsis size={18}/></button></td></tr>)}</tbody></table></div>:<EmptyState icon={Icon} title={`Your ${page.toLowerCase()} workspace is ready`} text="This screen is scaffolded with the Ritvan design system. Connect the backend in the next phase to manage real records." action={<Button variant="primary" icon={Plus} onClick={actionClick}>{config.action}</Button>}/>}<div className="table-footer"><span>Demo mode · Data is illustrative</span><span className="muted">Live database integration is next</span></div></section></>}</>;
 }
 
+function persistAuthSession(session, remember = Boolean(localStorage.getItem('ritvan.auth'))) {
+  if (remember) {
+    localStorage.setItem('ritvan.auth', JSON.stringify(session));
+    sessionStorage.removeItem('ritvan.auth');
+  } else {
+    persistAuthSession(session, rememberMe);
+    localStorage.removeItem('ritvan.auth');
+  }
+  sessionStorage.removeItem('nexora.auth');
+}
+function clearAuthSession() {
+  localStorage.removeItem('ritvan.auth');
+  sessionStorage.removeItem('ritvan.auth');
+  sessionStorage.removeItem('nexora.auth');
+}
 function App() {
-  const [auth, setAuth] = useState(() => { try { const saved = sessionStorage.getItem('ritvan.auth') || sessionStorage.getItem('nexora.auth'); const parsed = saved ? JSON.parse(saved) : null; if (parsed) { sessionStorage.setItem('ritvan.auth', JSON.stringify(parsed)); sessionStorage.removeItem('nexora.auth'); } return parsed; } catch { return null; } }); const [demoMode, setDemoMode] = useState(false); const [apiLoading, setApiLoading] = useState(Boolean(auth)); const [active, setActive] = useState('Dashboard'); const [dark, setDark] = useState(false); const [sidebarOpen, setSidebarOpen] = useState(false); const [role, setRole] = useState(() => { try { return JSON.parse(sessionStorage.getItem('ritvan.auth') || 'null')?.user?.role || 'Admin'; } catch { return 'Admin'; } }); const [items, setItems] = useState(initialItems); const [searchOpen, setSearchOpen] = useState(false); const [globalSearch, setGlobalSearch] = useState(''); const [notificationsOpen, setNotificationsOpen] = useState(false); const [toast, setToast] = useState(null); const [currency, setCurrency] = useState('INR'); const [businessName, setBusinessName] = useState('Ritvan Store'); const [businessLogo, setBusinessLogo] = useState('');
+  const [auth, setAuth] = useState(() => { try { const remembered = localStorage.getItem('ritvan.auth'); const saved = remembered || sessionStorage.getItem('ritvan.auth') || sessionStorage.getItem('nexora.auth'); const parsed = saved ? JSON.parse(saved) : null; if (parsed && !remembered) persistAuthSession(parsed, false); return parsed; } catch { clearAuthSession(); return null; } }); const [demoMode, setDemoMode] = useState(false); const [apiLoading, setApiLoading] = useState(Boolean(auth)); const [active, setActive] = useState('Dashboard'); const [dark, setDark] = useState(false); const [sidebarOpen, setSidebarOpen] = useState(false); const [role, setRole] = useState(() => { try { return JSON.parse(localStorage.getItem('ritvan.auth') || sessionStorage.getItem('ritvan.auth') || 'null')?.user?.role || 'Admin'; } catch { return 'Admin'; } }); const [items, setItems] = useState(initialItems); const [searchOpen, setSearchOpen] = useState(false); const [globalSearch, setGlobalSearch] = useState(''); const [notificationsOpen, setNotificationsOpen] = useState(false); const [toast, setToast] = useState(null); const [currency, setCurrency] = useState('INR'); const [businessName, setBusinessName] = useState('Ritvan Store'); const [businessLogo, setBusinessLogo] = useState('');
   const [lanInfo, setLanInfo] = useState(null);
-  useEffect(() => { if (window.ritvanNetwork?.getInfo) window.ritvanNetwork.getInfo().then(setLanInfo).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!window.ritvanNetwork?.getInfo) return;
+    let active = true;
+    const refreshLanInfo = () => window.ritvanNetwork.getInfo().then(info => { if (active) setLanInfo(info); }).catch(() => {});
+    refreshLanInfo();
+    const interval = window.setInterval(refreshLanInfo, 5000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, []);
   useEffect(() => {
     if (!auth) return;
     let cancelled = false;
@@ -900,22 +922,22 @@ function App() {
           setRole(sessionData.user.role);
           if (auth.user?.role !== sessionData.user.role || auth.user?.name !== sessionData.user.name || auth.user?.email !== sessionData.user.email || auth.user?.phone !== sessionData.user.phone || JSON.stringify(auth.user?.permissions || {}) !== JSON.stringify(sessionData.user.permissions || {})) {
             const currentSession = { ...auth, user: sessionData.user };
-            sessionStorage.setItem('ritvan.auth', JSON.stringify(currentSession));
+            persistAuthSession(currentSession);
             setAuth(currentSession);
           }
         }
       })
       .catch(() => {
         if (cancelled) return;
-        sessionStorage.removeItem('ritvan.auth'); sessionStorage.removeItem('nexora.auth');
+        clearAuthSession();
         setAuth(null);
         setApiLoading(false);
       })
       .finally(() => { if (!cancelled) setApiLoading(false); });
     return () => { cancelled = true; };
   }, [auth]);
-  const login = async credentials => {
-    const result = await apiRequest('/auth/login', { method: 'POST', body: credentials });
+  const login = async ({ email, password, rememberMe = false }) => {
+    const result = await apiRequest('/auth/login', { method: 'POST', body: { email, password } });
     const session = { token: result.token, user: result.user };
     sessionStorage.setItem('ritvan.auth', JSON.stringify(session));
     setRole(result.user.role);
