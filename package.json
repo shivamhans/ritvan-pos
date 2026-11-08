@@ -35,6 +35,7 @@
       "server/package.json",
       "server/node_modules/**/*",
       "server/.env.example",
+      "database/schema.sql",
       "package.json"
     ],
     "publish": [
