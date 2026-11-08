@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+client/.env
+client/.env.*
+!client/.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# Build output and local logs
+client/dist/
+server/logs/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
