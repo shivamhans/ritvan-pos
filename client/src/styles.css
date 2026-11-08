@@ -1944,3 +1944,11 @@ td { font-size:10px; }
   .stat-card { min-height:unset; }
   .section-title h1,.pos-heading h1 { font-size:23px; }
 }
+
+/* Keep the outer desktop frame in sync with the selected theme. */
+body:has(.app-shell.theme-dark) {
+  background:
+    radial-gradient(ellipse at 2% 8%,rgba(123,18,157,.30),transparent 31%),
+    radial-gradient(ellipse at 98% 0%,rgba(45,61,156,.26),transparent 32%),
+    #08050d;
+}
