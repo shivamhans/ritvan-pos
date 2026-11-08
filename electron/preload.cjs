@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('ritvanNetwork', { getInfo: () => ipcRenderer.invoke('ritvan-network:get-info') });
 contextBridge.exposeInMainWorld('ritvanUpdater', {
   getState: () => ipcRenderer.invoke('ritvan-updater:get-state'),
   checkForUpdates: () => ipcRenderer.invoke('ritvan-updater:check'),
