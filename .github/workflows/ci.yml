@@ -30,6 +30,9 @@ jobs:
           node-version: 22
       - name: Validate API source files
         run: |
+          node --check electron/main.cjs
+          node --check electron/preload.cjs
+          node --check server/src/migrations/runner.js
           node --check server/src/index.js
           node --check server/src/db.js
           node --check server/src/middleware/auth.js
