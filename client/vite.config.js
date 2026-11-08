@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => {
   const ngrokHost = String(env.NGROK_HOST || '').trim().toLowerCase();
 
   return {
+    // Relative asset paths allow the same production build to run from file:// inside Electron.
+    base: env.VITE_BASE || './',
     plugins: [react()],
     server: {
       // Bind to all local interfaces for access from devices on the same Wi-Fi.

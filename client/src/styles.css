@@ -1815,3 +1815,35 @@ body:has(.app-shell.theme-dark) {
 @media (prefers-reduced-motion: reduce) {
   .theme-dark .btn-primary { transition:none; }
 }
+
+
+/* Desktop updater popover — visual-only, uses the existing theme tokens. */
+.update-center{position:relative;display:flex;align-items:center}
+.update-center-trigger{position:relative}
+.update-center-trigger>i{position:absolute;right:5px;top:5px;width:7px;height:7px;border-radius:50%;background:#a96be8;box-shadow:0 0 0 2px var(--popover,#fff)}
+.update-center-trigger.update-ready{color:#a96be8}
+.update-spin{animation:ritvan-update-spin 1.2s linear infinite}
+@keyframes ritvan-update-spin{to{transform:rotate(360deg)}}
+.update-popover{position:absolute;z-index:1500;right:0;top:calc(100% + 12px);width:min(390px,calc(100vw - 28px));padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--popover);color:var(--text);box-shadow:0 20px 60px rgba(12,5,24,.28);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%)}
+.theme-dark .update-popover{background:rgba(19,10,29,.94);border-color:rgba(190,130,232,.25);box-shadow:0 22px 70px rgba(0,0,0,.48),0 0 34px rgba(131,65,176,.12)}
+.update-popover-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.update-popover-head h3{margin:5px 0 0;font-size:17px;font-weight:750;letter-spacing:-.025em}
+.update-version-row{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-secondary,rgba(127,98,166,.07))}
+.update-status-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:rgba(154,94,220,.14);color:#a96be8}
+.update-status-copy{min-width:0;display:flex;flex-direction:column;gap:4px}
+.update-status-copy b{font-size:13px;font-weight:750}
+.update-status-copy small,.update-auto-option small,.update-footnote{font-size:11px;line-height:1.5;color:var(--muted)}
+.update-message{margin:12px 0;font-size:12px;line-height:1.6;color:var(--muted)}
+.update-progress{height:6px;margin:12px 0;border-radius:99px;background:var(--line);overflow:hidden}
+.update-progress>div{height:100%;border-radius:inherit;background:linear-gradient(90deg,#8650ce,#c58bfa);transition:width .2s ease}
+.update-error{padding:9px 10px;border-radius:9px;background:rgba(218,73,92,.09);color:#d95e70;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.update-auto-option{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+.update-auto-option>span{display:flex;flex-direction:column;gap:5px}
+.update-auto-option b{font-size:12px}
+.update-auto-option input{width:17px;height:17px;flex:0 0 17px;margin:2px 0 0;accent-color:#9c60df}
+.update-actions{display:flex;gap:8px;margin:14px 0 10px}
+.update-actions .btn{justify-content:center;flex:1;gap:7px;padding-inline:10px;font-size:12px}
+.update-actions .btn:disabled{opacity:.45;cursor:not-allowed}
+.update-footnote{display:block}
+@media(max-width:700px){.update-popover{position:fixed;top:66px;right:12px}.update-actions{flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.update-spin{animation:none}.update-progress>div{transition:none}}

@@ -22,3 +22,8 @@ server/logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Desktop build output and local backups
+release/
+dist/
+database-backups/

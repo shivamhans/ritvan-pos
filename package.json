@@ -1,12 +1,107 @@
 {
   "name": "ritvan-pos",
-  "private": true,
   "version": "0.1.0",
-  "description": "Ritvan POS application workspace",
+  "private": true,
+  "description": "Ritvan POS cross-platform desktop application",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev:client": "npm --prefix client run dev",
     "build:client": "npm --prefix client run build",
     "dev:server": "npm --prefix server run dev",
-    "start:server": "npm --prefix server run start"
+    "start:server": "npm --prefix server run start",
+    "build:desktop": "npm run build:client && electron-builder --publish never",
+    "dist:win": "npm run build:client && electron-builder --win nsis --publish never",
+    "dist:mac": "npm run build:client && electron-builder --mac dmg zip --publish never",
+    "dist:linux": "npm run build:client && electron-builder --linux AppImage deb --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.shivamhans.ritvanpos",
+    "productName": "Ritvan POS",
+    "artifactName": "Ritvan-POS-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "client/dist/**/*",
+      "server/src/**/*",
+      "server/package.json",
+      "server/node_modules/**/*",
+      "server/.env.example",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "shivamhans",
+        "repo": "ritvan-pos"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ritvan POS"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Office",
+      "synopsis": "Ritvan POS point of sale",
+      "maintainer": "Shivam Hans <99956324+shivamhans@users.noreply.github.com>"
+    }
+  },
+  "author": {
+    "name": "Shivam Hans",
+    "email": "99956324+shivamhans@users.noreply.github.com"
   }
 }
