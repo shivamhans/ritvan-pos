@@ -52,7 +52,14 @@ jobs:
       - name: Build production frontend
         run: npm --prefix client run build
       - name: Build installer
-        run: npx electron-builder ${{ matrix.target }} --publish never
+        shell: bash
+        run: |
+          # Unsigned builds are supported. Do not pass empty signing variables:
+          # electron-builder may interpret an empty CSC_LINK as a filesystem path.
+          if [ -z "$CSC_LINK" ]; then
+            unset CSC_LINK CSC_KEY_PASSWORD
+          fi
+          npx electron-builder ${{ matrix.target }} --publish never
         env:
           CSC_LINK: ${{ matrix.platform == 'windows' && secrets.WIN_CSC_LINK || matrix.platform == 'macos' && secrets.MAC_CSC_LINK || '' }}
           CSC_KEY_PASSWORD: ${{ matrix.platform == 'windows' && secrets.WIN_CSC_KEY_PASSWORD || matrix.platform == 'macos' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
