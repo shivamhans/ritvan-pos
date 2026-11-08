@@ -2,7 +2,7 @@
 
 A single-store point-of-sale and retail operations system built with React, Vite, Tailwind CSS, Express and MySQL 8+. Ritvan keeps checkout, inventory, purchasing, customer credit, returns, staff, payroll and operating spendings in one local-first application.
 
-> **Release branch:** `fix/gross-profit-and-safe-installers`  
+ > **Default branch:** `main` · **Desktop update branch:** `feature/production-auto-updates` (merge after validation)  
 > **Important:** This is a local/LAN business application. Run the backup and verification steps before upgrading a database that contains live transactions.
 
 ## Contents
@@ -23,6 +23,7 @@ A single-store point-of-sale and retail operations system built with React, Vite
 - [Troubleshooting](#troubleshooting)
 - [Project structure](#project-structure)
 - [Checks and production limitations](#checks-and-production-limitations)
+- [Desktop installers and automatic updates](#desktop-installers-and-automatic-updates)
 
 ## Features
 
