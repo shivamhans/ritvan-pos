@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const crypto = require('node:crypto');
+const os = require('node:os');
 const { pathToFileURL } = require('node:url');
 const { createRequire } = require('node:module');
 const { autoUpdater } = require('electron-updater');
@@ -47,8 +48,8 @@ async function ensureEnvironment() {
   try { await fs.access(envPath); }
   catch {
     let example = await fs.readFile(path.join(app.getAppPath(), 'server', '.env.example'), 'utf8');
-    example = example.replace(/^HOST=.*$/m, 'HOST=127.0.0.1')
-      .replace(/^LAN_ACCESS=.*$/m, 'LAN_ACCESS=false')
+    example = example.replace(/^HOST=.*$/m, 'HOST=0.0.0.0')
+      .replace(/^LAN_ACCESS=.*$/m, 'LAN_ACCESS=true')
       .replace(/^JWT_SECRET=.*$/m, 'JWT_SECRET=' + crypto.randomBytes(48).toString('hex'));
     await fs.writeFile(envPath, example, { mode: 0o600 });
     const choice = await dialog.showMessageBox({
@@ -63,9 +64,10 @@ async function ensureEnvironment() {
   process.env.NODE_ENV = 'production';
   const serverRequire = createRequire(path.join(app.getAppPath(), 'server', 'package.json'));
   serverRequire('dotenv').config({ path: envPath, override: false });
-  process.env.HOST = '127.0.0.1';
-  process.env.LAN_ACCESS = 'false';
+  process.env.HOST = '0.0.0.0';
+  process.env.LAN_ACCESS = 'true';
   process.env.CLIENT_ORIGIN = 'null';
+  process.env.RITVAN_SCHEMA_PATH = path.join(app.getAppPath(), 'database', 'schema.sql');
   process.env.RITVAN_DESKTOP = 'true';
   process.env.RITVAN_ENV_PATH = envPath;
   process.env.RITVAN_BACKUP_DIR = path.join(userData, 'database-backups');
@@ -137,6 +139,18 @@ function setupUpdater() {
   setTimeout(() => autoUpdater.checkForUpdates().catch(() => {}), 8000);
   setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
 }
+function getLanAddresses() {
+  const port = Number(process.env.PORT || 4001);
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const entries of Object.values(interfaces)) {
+    for (const entry of entries || []) {
+      if (entry.family === 'IPv4' && !entry.internal && /^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.)/.test(entry.address)) addresses.push({ ip: entry.address, url: 'http://' + entry.address + ':' + port });
+    }
+  }
+  return { port, addresses };
+}
+ipcMain.handle('ritvan-network:get-info', () => getLanAddresses());
 ipcMain.handle('ritvan-updater:get-state', () => ({ ...updaterState, supported: app.isPackaged, currentVersion: app.getVersion(), autoInstallWhenIdle: preferences.autoInstallWhenIdle }));
 ipcMain.handle('ritvan-updater:check', async () => {
   if (!app.isPackaged) return { ...updaterState, supported: false };
