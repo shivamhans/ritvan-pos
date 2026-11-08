@@ -1847,3 +1847,5 @@ body:has(.app-shell.theme-dark) {
 .update-footnote{display:block}
 @media(max-width:700px){.update-popover{position:fixed;top:66px;right:12px}.update-actions{flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.update-spin{animation:none}.update-progress>div{transition:none}}
+
+.lan-address-chip{border:1px solid var(--line-strong);background:var(--panel);color:var(--muted);border-radius:8px;padding:7px 9px;font-size:9px;font-weight:750;white-space:nowrap;max-width:145px;overflow:hidden;text-overflow:ellipsis}.lan-address-chip:hover{color:var(--violet);border-color:var(--violet)}
