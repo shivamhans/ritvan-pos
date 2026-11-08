@@ -422,3 +422,66 @@ Not currently provided: payment gateway integration, automatic UPI/card collecti
 ---
 
 Ritvan POS is designed to make daily store operations easier while keeping important business records in MySQL. Back up the database before every upgrade and verify the health endpoint and record counts before reopening checkout.
+
+
+## Desktop installers and automatic updates
+
+Ritvan POS can be packaged as an installed desktop application for Windows, macOS and Linux. The installed desktop app has a GitHub Releases updater; the existing Vite development launcher is still intended for development and does **not** self-update.
+
+### Release flow
+
+1. Merge a tested change into `main`.
+2. GitHub Actions builds platform installers on Windows, macOS and Linux.
+3. The workflow publishes a versioned GitHub Release and update metadata.
+4. Installed clients check for updates at startup and every six hours.
+5. The app downloads the update in the background. An Admin can choose **Install now**, or enable automatic installation after ten minutes of inactivity while on the Dashboard. Automatic mode also installs a downloaded update when the app is quit.
+
+The workflow assigns increasing versions in the `1.0.<GitHub Actions run number>` format. Do not manually reuse a published version/tag. A change pushed to a feature branch does not publish a client release; it must reach `main`.
+
+### Build locally
+
+Use Node.js 22 and install MySQL separately. From the repository root:
+
+```bash
+npm install
+npm --prefix server install
+npm --prefix client install
+npm --prefix client run build
+```
+
+Then build for the operating system you're currently using:
+
+```bash
+npm run dist:win    # Windows; run on Windows
+npm run dist:mac    # macOS; run on macOS
+npm run dist:linux  # Linux; run on Linux
+```
+
+GitHub Actions builds all three platforms. Release files are published in the repository's **Releases** section.
+
+### First desktop launch and local MySQL
+
+- Install the platform installer. MySQL 8+ remains a separately installed local service.
+- On first launch, Ritvan creates a private `.env` configuration file in the operating system's Ritvan POS application-data folder. Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` to match the existing store database. The updater does not replace this file.
+- For an existing store, configure the **same database name that already holds the live records**. The desktop updater does not run `fresh.sql` or `overwrite.sql` to update the application.
+- Keep a separate, tested backup before the first desktop installation. The old source-folder launcher and the installed desktop app are different deployment formats; moving to the installer is a one-time migration of application files/configuration, not a database reset.
+- The API binds to loopback in desktop mode. For a multi-device store, keep using a deliberately configured server/LAN deployment rather than assuming the desktop wrapper exposes the API to other devices.
+
+### Database migrations and backups
+
+Future automatic schema changes must be added as numbered JavaScript migrations under `server/src/migrations/scripts/`, for example `001-add-item-source.js`. Each file must export an asynchronous `up({ connection, pool })` function. Never edit a migration after it has been applied; add a new migration instead.
+
+The migration runner records names and SHA-256 checksums in `ritvan_schema_migrations`. Before applying each pending migration it runs `mysqldump` and stores a backup in the app's private data folder. If the backup fails, the migration is not run. If a migration fails, startup stops instead of continuing against a potentially incompatible schema. If `mysqldump` is not on PATH, set `MYSQLDUMP_PATH` in the private `.env` file.
+
+MySQL DDL can auto-commit. A dump is a recovery point, not a guaranteed transactional rollback. Always test a migration on a copy of real data, and verify that the backup can be restored. The updater changes application files; it does not intentionally delete, recreate or overwrite the store database.
+
+### Platform signing and release caveats
+
+- **Windows:** code signing is recommended to reduce SmartScreen warnings and improve publisher verification.
+- **macOS:** automatic updates require a signed application. Configure the repository Actions secrets `CSC_LINK` and `CSC_KEY_PASSWORD` with your Apple Developer signing certificate and password before distributing macOS builds. Notarization credentials may also be needed for a polished public release.
+- **Linux:** AppImage is the preferred self-updating format. Installing a `.deb` package may require administrator/package-manager permission.
+- Keep the GitHub repository public for the current public GitHub Releases feed. Never place a GitHub token, database password or signing certificate in client-side code or commit secrets to the repository.
+
+### Before distributing to paying customers
+
+Test clean installs and updates on each target OS. Test an update with a disposable copy of a populated database, an unavailable MySQL service, a missing `mysqldump` executable, an interrupted download and a failed migration. Confirm checkout is not interrupted and that the database backup can be restored. The workflow and updater implementation must pass CI and real installed-app testing before being treated as production-certified.
