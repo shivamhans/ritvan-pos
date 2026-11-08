@@ -1849,3 +1849,15 @@ body:has(.app-shell.theme-dark) {
 @media(prefers-reduced-motion:reduce){.update-spin{animation:none}.update-progress>div{transition:none}}
 
 .lan-address-chip{border:1px solid var(--line-strong);background:var(--panel);color:var(--muted);border-radius:8px;padding:7px 9px;font-size:9px;font-weight:750;white-space:nowrap;max-width:145px;overflow:hidden;text-overflow:ellipsis}.lan-address-chip:hover{color:var(--violet);border-color:var(--violet)}
+
+
+.remember-me-option{display:flex;align-items:center;gap:9px;margin:3px 0 15px;color:#514b68;font-size:12px;font-weight:650;cursor:pointer}
+.remember-me-option input{width:15px;height:15px;margin:0;accent-color:#8665df;flex:0 0 15px}
+.remember-me-option small{margin-left:auto;color:#a39db4;font-size:10px;font-weight:450}
+@media(max-width:480px){.remember-me-option{flex-wrap:wrap}.remember-me-option small{margin-left:24px;width:100%}}
+.database-repair-panel{display:flex;flex-direction:column;gap:13px;padding:18px 20px;overflow:visible}
+.database-repair-panel>.panel-head{padding:0 0 14px;border-bottom:1px solid var(--line);align-items:flex-start}
+.database-repair-panel>.settings-live-actions{padding:0;border:0;justify-content:flex-start;flex-wrap:wrap}
+.database-repair-panel>.muted{margin:0;max-width:100%;font-size:11px;line-height:1.55;overflow-wrap:anywhere}
+.database-repair-panel .warning-callout{margin:0}
+@media(max-width:600px){.database-repair-panel{padding:15px}.database-repair-panel>.panel-head{gap:10px;flex-direction:column}.database-repair-panel>.settings-live-actions{align-items:stretch;flex-direction:column}.database-repair-panel>.settings-live-actions .btn{width:100%;justify-content:center}}
