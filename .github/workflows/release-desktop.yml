@@ -3,6 +3,8 @@ name: Build and publish Ritvan POS desktop updates
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -64,6 +66,7 @@ jobs:
           retention-days: 7
 
   publish:
+    if: github.event_name != 'pull_request'
     name: Publish GitHub Release
     needs: build
     runs-on: ubuntu-latest
