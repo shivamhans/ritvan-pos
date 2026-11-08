@@ -464,7 +464,7 @@ GitHub Actions builds all three platforms. Release files are published in the re
 
 - Install the platform installer. MySQL 8+ remains a separately installed local service.
 - On first launch, Ritvan creates a private `.env` configuration file in the operating system's Ritvan POS application-data folder. Set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` to match the existing store database. The updater does not replace this file.
-- For an existing store, configure the **same database name that already holds the live records**. The desktop updater does not run `fresh.sql` or `overwrite.sql` to update the application.
+- For an existing store, configure the **same database name that already holds the live records** and copy the matching DB connection values from the old `server/.env`. If `EMPLOYEE_PII_ENCRYPTION_KEY` was configured, copy that exact key too; do not generate a replacement, or previously encrypted employee identifiers may become unreadable. The desktop updater does not run `fresh.sql` or `overwrite.sql` to update the application.
 - Keep a separate, tested backup before the first desktop installation. The old source-folder launcher and the installed desktop app are different deployment formats; moving to the installer is a one-time migration of application files/configuration, not a database reset.
 - The API binds to loopback in desktop mode. For a multi-device store, keep using a deliberately configured server/LAN deployment rather than assuming the desktop wrapper exposes the API to other devices.
 
