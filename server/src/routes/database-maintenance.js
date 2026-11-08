@@ -14,7 +14,7 @@ function schemaPath() {
 
 async function inspectMissingTables(connection) {
   const source = await fs.readFile(schemaPath(), 'utf8');
-  const statements = [...source.matchAll(/CREATE TABLE IF NOT EXISTS\\s+`?([a-zA-Z0-9_]+)`?[\\s\\S]*?ENGINE=InnoDB\\s*;/gi)]
+  const statements = [...source.matchAll(/CREATE TABLE IF NOT EXISTS\s+`?([a-zA-Z0-9_]+)`?[\s\S]*?ENGINE=InnoDB\s*;/gi)]
     .map(match => ({ name: match[1], sql: match[0] }));
   if (!statements.length) throw new Error('No CREATE TABLE definitions were found in the packaged schema file.');
   const [rows] = await connection.execute(
