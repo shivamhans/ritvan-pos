@@ -55,3 +55,22 @@ jobs:
           node --check server/src/routes/spendings.js
           node --check server/src/seed-admin.js
           node --check server/src/reset-user-password.js
+
+  desktop-package-check:
+    name: Desktop packaging smoke test (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install desktop build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install API dependencies
+        run: npm --prefix server install --no-audit --no-fund
+      - name: Install frontend dependencies
+        run: npm --prefix client install --no-audit --no-fund
+      - name: Build production frontend
+        run: npm --prefix client run build
+      - name: Package Electron app without installer
+        run: npx electron-builder --linux --dir --publish never
