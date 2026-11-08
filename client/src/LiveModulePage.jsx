@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle, ArrowDownRight, ArrowUpRight, Boxes, CheckCircle2, ChevronDown, ClipboardList,
   Clock3, Download, Eye, Filter, ImagePlus, Package, PackagePlus, Pencil, Plus, RefreshCw, Search, ShieldCheck,
-  Tag, Truck, Users, Wallet, Store, X, RotateCcw, History, CircleCheck, CircleHelp, FileText, Save,
-  ReceiptText, CalendarDays, CreditCard, TrendingUp
+  Tag, Truck, Users, Wallet, Store, X, RotateCcw, History, CircleCheck, CircleHelp, FileText, Save
 } from 'lucide-react';
 import { apiRequest, toUiItems } from './lib/api.js';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';

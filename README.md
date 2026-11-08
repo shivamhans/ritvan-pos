@@ -400,10 +400,6 @@ ritvan-pos/
 └── README.md
 ```
 
-## Interface and themes
-
-Ritvan POS uses a responsive, workspace-style interface with a compact navigation rail, translucent panels, restrained violet accents, clear page hierarchy and consistent interaction states. The dark theme uses a deep charcoal/plum canvas with violet ambient lighting; the light theme uses a soft neutral canvas with white surfaces and the same violet accent system. Switch themes from the top navigation. The layout adapts for desktop, tablet and mobile widths, including a slide-in mobile navigation drawer. The redesign is presentation-only: it does not change stored business records, API contracts, roles, permissions or accounting calculations.
-
 ## Checks and production limitations
 
 GitHub Actions currently checks the frontend production build and backend JavaScript syntax. These checks do not replace integration tests against a real MySQL database.
