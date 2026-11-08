@@ -66,7 +66,7 @@ export async function runPendingMigrations() {
     let entries = [];
     try { entries = await fs.readdir(migrationDirectory); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
-    const files = entries.filter(name => /^\\d{3,}[-_][a-zA-Z0-9_.-]+\\.js$/.test(name)).sort();
+    const files = entries.filter(name => /^\d{3,}[-_][a-zA-Z0-9_.-]+\.js$/.test(name)).sort();
     let appliedCount = 0;
     for (const name of files) {
       const absolutePath = path.join(migrationDirectory, name);
