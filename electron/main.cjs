@@ -60,6 +60,7 @@ async function ensureEnvironment() {
     if (choice.response === 0) await shell.openPath(userData);
   }
   process.env.RITVAN_ENV_PATH = envPath;
+  process.env.NODE_ENV = 'production';
   const serverRequire = createRequire(path.join(app.getAppPath(), 'server', 'package.json'));
   serverRequire('dotenv').config({ path: envPath, override: false });
   process.env.HOST = '127.0.0.1';
