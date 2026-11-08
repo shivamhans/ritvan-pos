@@ -15,7 +15,6 @@ export default function UpdateCenter({ activePage, hasModal, isAdmin }) {
     bridge.getState().then(next => {
       if (!mounted) return;
       setState(next);
-      if (next?.supported) bridge.checkForUpdates().catch(() => {});
     }).catch(() => {});
     const report = () => bridge.reportActivity({
       safeToUpdate: activePage === 'Dashboard' && !hasModal,
