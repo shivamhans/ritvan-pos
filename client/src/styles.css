@@ -1763,3 +1763,55 @@ body:has(.app-shell.theme-dark) {
 }
 .theme-dark .btn-text { color:#c28af5; }
 .theme-dark .btn-text:hover { background:rgba(165,95,224,.14); }
+
+
+/* ==========================================================================
+   ITERATE-INSPIRED AMBIENT GLOW
+   Atmospheric light only: no layout, sizing, spacing or positioning changes.
+   ========================================================================== */
+body:has(.app-shell.theme-dark) {
+  background:
+    radial-gradient(ellipse 58% 52% at 0% 8%, rgba(103, 20, 132, .34), transparent 72%),
+    radial-gradient(ellipse 48% 52% at 100% 4%, rgba(54, 57, 142, .28), transparent 72%),
+    radial-gradient(ellipse 52% 42% at 54% 100%, rgba(91, 35, 124, .18), transparent 75%),
+    #08050d;
+  background-attachment: fixed;
+}
+.theme-dark.app-shell {
+  background:
+    radial-gradient(ellipse 48% 48% at 0% 7%, rgba(115, 24, 145, .23), transparent 72%),
+    radial-gradient(ellipse 42% 46% at 100% 0%, rgba(54, 57, 142, .19), transparent 72%),
+    radial-gradient(ellipse 50% 38% at 48% 100%, rgba(91, 35, 124, .12), transparent 76%),
+    rgba(8, 5, 13, .94);
+  background-attachment: fixed;
+}
+.theme-dark .brand-mark {
+  background:linear-gradient(145deg,#d4a0ff 0%,#a45de0 48%,#7040b4 100%);
+  box-shadow:0 0 18px rgba(175,105,235,.32),0 5px 18px rgba(117,57,161,.24);
+}
+.theme-dark .btn-primary {
+  box-shadow:0 0 0 1px rgba(226,184,255,.10) inset,
+    0 5px 18px rgba(142,75,193,.24),
+    0 0 28px rgba(143,74,193,.12);
+}
+.theme-dark .btn-primary:hover {
+  box-shadow:0 0 0 1px rgba(236,205,255,.18) inset,
+    0 7px 22px rgba(153,83,206,.30),
+    0 0 34px rgba(153,83,206,.18);
+}
+.theme-dark .sidebar-help {
+  background:
+    radial-gradient(circle at 100% 0%,rgba(177,101,229,.19),transparent 46%),
+    linear-gradient(140deg,rgba(122,55,168,.24),rgba(37,19,53,.38));
+  box-shadow:0 8px 28px rgba(0,0,0,.12),0 0 26px rgba(130,65,172,.07);
+}
+.theme-dark .nav-item.nav-active {
+  box-shadow:inset 2px 0 #c28af5,0 0 22px rgba(151,79,203,.09);
+}
+.theme-dark .glass-card,
+.theme-dark .panel {
+  background:linear-gradient(145deg,rgba(34,19,47,.78),rgba(18,11,27,.78));
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-dark .btn-primary { transition:none; }
+}
