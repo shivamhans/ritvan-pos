@@ -106,7 +106,7 @@ export default function LoginScreen({ onLogin, onDemo }) {
               <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
             </div>
             <label className="remember-me-option"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} /><span>Remember me</span><small>Keep me signed in on this device</small></label>
-            {error && <div className="login-error" role="alert">{error}</div>
+            {error && <div className="login-error" role="alert">{error}</div>}
             <button className="login-submit" type="submit" disabled={busy || apiOnline === false}>
               <span>{busy ? 'Signing in…' : 'Sign in to Ritvan'}</span>{!busy && <ArrowRight size={17} />}
             </button>
