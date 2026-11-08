@@ -478,8 +478,8 @@ MySQL DDL can auto-commit. A dump is a recovery point, not a guaranteed transact
 
 ### Platform signing and release caveats
 
-- **Windows:** code signing is recommended to reduce SmartScreen warnings and improve publisher verification.
-- **macOS:** automatic updates require a signed application. Configure the repository Actions secrets `CSC_LINK` and `CSC_KEY_PASSWORD` with your Apple Developer signing certificate and password before distributing macOS builds. Notarization credentials may also be needed for a polished public release.
+- **Windows:** code signing is recommended to reduce SmartScreen warnings and improve publisher verification. Configure `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` with a Windows code-signing certificate if you have one.
+- **macOS:** automatic updates require a signed application. Configure `MAC_CSC_LINK` and `MAC_CSC_KEY_PASSWORD` with your Apple Developer signing certificate and password before distributing macOS builds. Notarization credentials may also be needed for a polished public release. Windows and macOS use separate signing secrets because their certificates are different.
 - **Linux:** AppImage is the preferred self-updating format. Installing a `.deb` package may require administrator/package-manager permission.
 - Keep the GitHub repository public for the current public GitHub Releases feed. Never place a GitHub token, database password or signing certificate in client-side code or commit secrets to the repository.
 
