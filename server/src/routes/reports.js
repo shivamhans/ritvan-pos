@@ -31,6 +31,17 @@ router.get('/summary', async (req, res, next) => {
       SELECT COUNT(*) AS completedReturns, COALESCE(SUM(refund_total),0) AS refundTotal
       FROM returns WHERE status = 'COMPLETED' AND DATE(completed_at) BETWEEN ? AND ?
     `, [from, to]);
+    const [purchaseRows] = await pool.execute(`
+      SELECT COUNT(*) AS purchaseCount, COALESCE(SUM(total_amount), 0) AS purchasesTotal
+      FROM purchases
+      WHERE status <> 'CANCELLED' AND purchase_date BETWEEN ? AND ?
+    `, [from, to]);
+    const [salaryRows] = await pool.execute(`
+      SELECT COUNT(*) AS salaryPaymentCount, COALESCE(SUM(payable_amount), 0) AS employeeSalaryPaid
+      FROM employee_payroll
+      WHERE status = 'PAID' AND paid_at IS NOT NULL
+        AND DATE(paid_at) BETWEEN ? AND ?
+    `, [from, to]);
     const [costRows] = await pool.execute(`
       SELECT COALESCE(SUM(si.quantity * si.unit_cost_snapshot),0) AS soldCost,
         COALESCE(SUM(CASE WHEN si.provisional_cost = 0 THEN si.quantity * si.unit_cost_snapshot ELSE 0 END),0) AS knownSoldCost,
@@ -118,6 +129,8 @@ router.get('/summary', async (req, res, next) => {
       ) balances WHERE balance > 0
     `);
     const mayViewSpendings = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Spendings'));
+    const mayViewPayroll = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Employees'));
+    const mayViewPurchases = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Purchases'));
     let spendingTrackingAvailable = null;
     let spendingSummary = null;
     let recentSpendings = [];
@@ -243,6 +256,10 @@ router.get('/summary', async (req, res, next) => {
         completedSales: Number(sale.completedSales),
         completedReturns: Number(ret.completedReturns),
         salesTotal: money2(sale.salesTotal),
+        purchasesTotal: mayViewPurchases ? money2(purchaseRows[0]?.purchasesTotal || 0) : null,
+        purchaseCount: mayViewPurchases ? Number(purchaseRows[0]?.purchaseCount || 0) : null,
+        employeeSalaryPaid: mayViewPayroll ? money2(salaryRows[0]?.employeeSalaryPaid || 0) : null,
+        salaryPaymentCount: mayViewPayroll ? Number(salaryRows[0]?.salaryPaymentCount || 0) : null,
         refundsTotal: money2(ret.refundTotal),
         netRevenue,
         grossProfit,
