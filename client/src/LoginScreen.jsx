@@ -11,6 +11,7 @@ export default function LoginScreen({ onLogin, onDemo }) {
   const [error, setError] = useState('');
   const [apiOnline, setApiOnline] = useState(null);
   const [dbOnline, setDbOnline] = useState(null);
+  const [registrationNotice, setRegistrationNotice] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -112,9 +113,11 @@ export default function LoginScreen({ onLogin, onDemo }) {
             </button>
           </form>
           {(apiOnline === false || dbOnline === false) && <p className="login-help">{apiOnline === false ? 'Start the Express server and confirm the API URL is correct.' : 'The API is running, but MySQL is not connected. Start MySQL and check server/.env.'}</p>}
-          <div className="login-divider"><span /> <small>OR</small> <span /></div>
-          <button className="login-demo-button" type="button" onClick={onDemo}>Explore demo workspace <ArrowRight size={16} /></button>
-          <p className="login-form-foot">Demo data is illustrative and resets on refresh. It is not connected to your database.</p>
+          <div className="login-register-prompt">
+            <span>New to Ritvan?</span>
+            <button type="button" onClick={() => setRegistrationNotice(true)}>Create a store account <ArrowRight size={15} /></button>
+          </div>
+          {registrationNotice && <p className="login-registration-notice" role="status">Store registration is coming with multi-shop setup. Existing store sign-in is ready; staff accounts will be created by each store admin.</p>}
         </section>
       </main>
     </div>
