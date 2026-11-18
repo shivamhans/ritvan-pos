@@ -98,12 +98,10 @@
 .login-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 24px rgba(105,83,219,.25)}
 .login-submit:disabled{opacity:.58}
 .login-help{margin:12px 0 0;color:#8f7848;font-size:11px;line-height:1.55}
-.login-divider{display:flex;align-items:center;gap:12px;margin:23px 0 17px;color:#b3aec4}
-.login-divider span{height:1px;flex:1;background:#ece9f5}
-.login-divider small{font-size:9px;letter-spacing:.12em}
-.login-demo-button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:0 13px;border:1px solid #e7e3f2;border-radius:11px;background:#fff;color:#4e4969;font-weight:600;font-size:11px;transition:border-color .15s,background .15s}
-.login-demo-button:hover{border-color:#c8bfff;background:#fbfaff}
-.login-form-foot{margin:15px 0 0;text-align:center;color:#aaa5ba;font-size:10px;line-height:1.6}
+.login-register-prompt{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid #ece9f5;color:#89859f;font-size:12px}
+.login-register-prompt button{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;padding:5px;color:#705cde;font-size:12px;font-weight:750}
+.login-register-prompt button:hover{color:#5945c9;text-decoration:underline}
+.login-registration-notice{margin:9px 0 0;padding:10px 12px;border:1px solid #e8e2ff;border-radius:10px;background:#f8f6ff;color:#746b95;font-size:10px;line-height:1.6;text-align:center}
 .app-loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at 50% 15%,rgba(220,212,255,.48),transparent 42%),var(--bg);color:var(--text)}
 .app-loading-screen .login-brand-mark{margin-bottom:7px}
 .app-loading-screen h2{margin:0;font-size:20px;letter-spacing:-.025em}
