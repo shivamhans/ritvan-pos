@@ -125,6 +125,8 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
     auth?.user?.permissions?.columns?.Customers?.includes('outstandingBalance')
   );
   const canViewSpendings = auth?.user?.role === 'Admin' || Boolean(auth?.user?.permissions?.modules?.includes('Spendings'));
+  const canViewPayroll = auth?.user?.role === 'Admin' || Boolean(auth?.user?.permissions?.modules?.includes('Employees'));
+  const canViewPurchases = auth?.user?.role === 'Admin' || Boolean(auth?.user?.permissions?.modules?.includes('Purchases'));
   const loading = isLive && reportLoading;
   const hasData = demo || Boolean(reportData);
   const revenue = demo ? 24580 : summary?.netRevenue;
@@ -178,6 +180,8 @@ function Dashboard({ items, onNavigate, isLive = false, auth, currency = 'INR' }
       <StatCard icon={TrendingUp} label={isLive && Number(summary?.provisionalCostQuantity || 0) > 0 ? 'Gross profit*' : 'Gross profit'} value={loading ? '—' : !hasData ? '—' : demo ? formatAmount(grossProfit) : formatAmount(grossProfit)} change={demo ? '6.4%' : undefined} note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">{Number(summary?.provisionalCostQuantity || 0) > 0 ? 'Known-cost figure; excludes ' + Number(summary.provisionalCostQuantity).toLocaleString('en-IN') + ' unverified units' : 'Based on saved cost snapshots'}</span>} accent="green"/>
       <StatCard icon={Package} label="Inventory cost value" value={loading ? '—' : hasData ? formatAmount(inventoryValue) : '—'} change={demo ? '2.1%' : undefined} trend="down" note={demo ? <span className="muted">Illustrative demo value</span> : <span className="muted">Quantity on hand × average cost</span>} accent="amber"/>
       {canViewSpendings && <StatCard icon={Wallet} label="Operating spendings" value={loading ? '—' : demo ? '—' : !reportData?.spendingTrackingAvailable ? 'Setup required' : formatAmount(summary?.operatingSpendings || 0)} note={demo ? <span className="muted">Sign in to view saved spendings</span> : !reportData?.spendingTrackingAvailable ? <span className="muted">Run the updated database installer</span> : <span className="muted">{Number(summary?.operatingSpendingCount || 0)} recorded entries in this period</span>} accent="amber"/>}
+      {canViewPayroll && <StatCard icon={Banknote} label="Employee salaries paid" value={loading ? '—' : !hasData ? '—' : demo ? '—' : summary?.employeeSalaryPaid == null ? '—' : formatAmount(summary.employeeSalaryPaid)} note={demo ? <span className="muted">Sign in to view payroll payments</span> : <span className="muted">{summary?.salaryPaymentCount ?? 0} payments in this period</span>} accent="green"/>}
+      {canViewPurchases && <StatCard icon={ShoppingCart} label="Total purchases" value={loading ? '—' : !hasData ? '—' : demo ? '—' : summary?.purchasesTotal == null ? '—' : formatAmount(summary.purchasesTotal)} note={demo ? <span className="muted">Sign in to view saved purchases</span> : <span className="muted">{summary?.purchaseCount ?? 0} non-cancelled purchases in this period</span>} accent="blue"/>}
     </div>
     <div className="dashboard-main-grid">
       <section className="panel chart-panel">
