@@ -129,6 +129,8 @@ router.get('/summary', async (req, res, next) => {
       ) balances WHERE balance > 0
     `);
     const mayViewSpendings = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Spendings'));
+    const mayViewPayroll = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Employees'));
+    const mayViewPurchases = req.user.role === 'Admin' || Boolean(req.user.permissions?.modules?.includes('Purchases'));
     let spendingTrackingAvailable = null;
     let spendingSummary = null;
     let recentSpendings = [];
@@ -254,10 +256,10 @@ router.get('/summary', async (req, res, next) => {
         completedSales: Number(sale.completedSales),
         completedReturns: Number(ret.completedReturns),
         salesTotal: money2(sale.salesTotal),
-        purchasesTotal: money2(purchaseRows[0]?.purchasesTotal || 0),
-        purchaseCount: Number(purchaseRows[0]?.purchaseCount || 0),
-        employeeSalaryPaid: money2(salaryRows[0]?.employeeSalaryPaid || 0),
-        salaryPaymentCount: Number(salaryRows[0]?.salaryPaymentCount || 0),
+        purchasesTotal: mayViewPurchases ? money2(purchaseRows[0]?.purchasesTotal || 0) : null,
+        purchaseCount: mayViewPurchases ? Number(purchaseRows[0]?.purchaseCount || 0) : null,
+        employeeSalaryPaid: mayViewPayroll ? money2(salaryRows[0]?.employeeSalaryPaid || 0) : null,
+        salaryPaymentCount: mayViewPayroll ? Number(salaryRows[0]?.salaryPaymentCount || 0) : null,
         refundsTotal: money2(ret.refundTotal),
         netRevenue,
         grossProfit,
